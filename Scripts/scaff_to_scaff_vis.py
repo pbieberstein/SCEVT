@@ -5,6 +5,110 @@ import matplotlib.pyplot as plt
 import random
 from Bio import SeqIO
 
+class MatchObject:
+    def __init__(self, ref_scaffold_object, target_scaffold_object):
+        self.ref_object = ref_scaffold_object
+        self.target_object = target_scaffold_object
+        (unique_ref_genes, unique_target_genes, mutual_gene_connectors, total_ref_genes, total_target_genes,
+         total_mutual_genes) = self.get_comparison_stats()
+
+        # New awesome characteristics of this class
+        self.unique_ref = unique_ref_genes
+        self.unique_target = unique_target_genes
+        self.mutual_genes = mutual_gene_connectors
+        self.total_ref_genes = total_ref_genes
+        self.total_target_genes = total_target_genes
+        self.total_mutual_genes = total_mutual_genes
+
+
+    def get_comparison_stats(self):
+        '''
+        This function takes two scaffold objects that we want to compare and generates 3 lists:
+        ref_unique_genes
+        target_unique_genes
+        mutual_genes
+        :param ref_scaffold:
+        :param target_scaffold:
+        :return:
+        '''
+        # Scaff_Object.genes => {'Manes.12G061900.1': [[1404095, 1405697]], 'Manes.12G059000.1': [[2613631, 2614138]]...}
+        # Go through each gene in reference Genome,
+        ref_scaffold = self.ref_object
+        target_scaffold = self.target_object
+
+        mutual_gene_connectors = {}  # Looks like this: {1:{ref_coord:232, target_coord:5342, name:"masd222"}, 2:...}
+        unique_ref_genes = {}
+        unique_target_genes = {}
+        match_number = 0
+        total_ref_genes = 0
+        total_target_genes = 0
+        total_mutual_genes = 0
+        for ref_gene in ref_scaffold.genes: # now ref_gene is the name of each gene on the ref_scaffold
+            total_ref_genes += 1
+            if ref_gene in target_scaffold.genes: # checks if this gene also exists on the target scaffold
+                total_mutual_genes += 1
+                for ref_instance in ref_scaffold.genes[ref_gene]: # If yes, get each coordinate instance of that gene from the ref_scaffold
+                    for target_instance in target_scaffold.genes[ref_gene]: # for each instance on the ref_scaffold, get each instance of that gene on the target Scaffold
+
+                        mutual_gene_connectors[match_number] = {"name": ref_gene,"ref_coord":ref_instance[0], "target_coord": target_instance[0]} # build up mutual gene dictionary
+                        match_number += 1 # increase counter for mutual genes
+            else: # if the gene does not exist on target scaffold, add it to a dictionary that only contains genes that are unique to the ref_scaffold
+                for ref_instance in ref_scaffold.genes[ref_gene]: #
+                    unique_ref_genes[match_number] = {"name": ref_gene, "ref_coord": ref_instance[0]}  # build up unique to reference scaffold gene dictionary
+                    match_number += 1
+
+        for target_gene in target_scaffold.genes: # iterate through all target scaffold genes
+            total_target_genes += 1
+            if target_gene not in ref_scaffold.genes: # if the gene does not exist on the reference scaffold
+                for target_instance in target_scaffold.genes[target_gene]: # add each instance of that gene to the unique to target dictionary
+                    unique_target_genes[match_number] = {"name": target_gene, "target_coord": target_instance[0]}
+                    match_number += 1
+
+        # Calculate how many genes matched out of all genes
+
+
+        return unique_ref_genes, unique_target_genes, mutual_gene_connectors, total_ref_genes, total_target_genes, total_mutual_genes
+
+
+
+
+    def plot_scaffold(self, vertical_pointer=100,x_offset=0, scaffold_object=None):
+        plt.plot([0 + x_offset, scaffold_object.length + x_offset], [vertical_pointer, vertical_pointer], color='k',
+                 linestyle='-', linewidth=4)
+        text_location = vertical_pointer + 40
+        # drawing the gaps
+        for key in scaffold_object.gaps:
+            gap = scaffold_object.gaps[key] # returns a list witht the start of the gap and the end of that same gap
+            start = gap[0]
+            end = gap[1]
+            if abs(end-start) > N_region_min: # checks if gap is big enough for us to care about drawing it
+                offsetter = -12 # silly hack to make the gap drawing fine enough for small gaps... otherwise the giant red blots just overlap way too much
+                for i in range(1,48):
+                    offsetter += .5
+                    plt.plot([start+x_offset, end+x_offset], [vertical_pointer + offsetter, vertical_pointer + offsetter], color='r', linestyle='-', linewidth=0.1, alpha=1)
+
+        # Now add the labeling
+        # the scaffold name
+        plt.text(0 + x_offset, text_location, scaffold_object.id, fontsize=5)
+
+
+
+
+
+    def mutual_gene_connections(self, vertical_pointer_ref=100, vertical_pointer_target=-100):
+        return None
+
+    def plot_match_scaffolds(self):
+
+        # Plot Reference Scaffold
+        self.plot_scaffold(vertical_pointer=200, scaffold_object=self.ref_object, x_offset=ref_scaff_x_offset)
+
+        # Plot Target Scaffold
+        self.plot_scaffold(vertical_pointer=-200, scaffold_object=self.target_object, x_offset=target_scaff_x_offset)
+
+
+
+
 
 
 class ScaffoldBNG:
@@ -18,7 +122,7 @@ class ScaffoldBNG:
         self.gaps = self.N_region_finder() # this will be a dictionary with all the gaps! {1:[4,200], 2:[455, 7676]}
         self.record = seqIO_record
         self.genes = self.get_gene_coordinates(psl_filename = psl_file) # This gets the the gene or SNP mappings (coordinates) and ties them to this scaffold object
-
+        # self.genes => {'Manes.12G061900.1': [[1404095, 1405697]], 'Manes.12G059000.1': [[2613631, 2614138]]...}
 
     def N_region_finder(self):
         '''
@@ -95,10 +199,20 @@ class ScaffoldBNG:
                 if row[13] == self.id:
                     coordinate_range = [row[15], row[16]]
                     gene_name = row[9]
+                    almost_same = False
                     if gene_name in gene_dict:
-                        gene_dict[gene_name].append(coordinate_range)
-                    else:
-                        gene_dict[gene_name] = [coordinate_range]
+                        for coordinates in gene_dict[gene_name]: # coordinates will be a list of start & end [start, end]
+                            # gene exists already in the gene dictionary, so we have to check that the match is different enough for us to care.. (not splicing)
+                            if abs(coordinates[0] - coordinate_range[0]) < 300 or abs(coordinates[1] - coordinate_range[1]) < 300:
+                                almost_same = True # probably just difference in splicing, so we can ignore it
+                            else:
+                                None
+                        if almost_same:
+                            None
+                        else: # coordinates are not just different splicing, so we add them to the dictionary
+                            gene_dict[gene_name].append(coordinate_range)
+                    else: # we have no coordinates for this gene yet, so we add it freshly
+                        gene_dict[gene_name] = [coordinate_range] # that gene doesn't exist yet, so I add it freshly
         return gene_dict
 
 
@@ -111,12 +225,30 @@ class ScaffoldBNG:
         for key in self.genes: # {"gene1:[[22,532],[2343,64545]],"gene2:[[2,44]]...}
             for instance in genes[key]:
                 if key in new_gene_coordinates:
-                    new_gene_coordinates[key].append(mirror_lists(instance))
+                    new_gene_coordinates[key].append(mirror_lists(half, instance))
                 else:
-                    new_gene_coordinates[key] = [mirror_lists(instance)]
+                    new_gene_coordinates[key] = [mirror_lists(half, instance)]
         self.genes = new_gene_coordinates
         print self.id + " was Inverted."
         return self.genes
+
+    def mirror_lists(self, mid_point_coord, list_to_invert):
+        # This function takes a list of coordinates and the coordinate of the halfway points
+        # it then goes through the list and inverts it by:
+        # 1. Move it to the left by half
+        # 2. Multiply all coordinates by -1
+        # 3. move to the right by half
+        if isinstance(list_to_invert, list):
+            for i, item in enumerate(list_to_invert):
+                result = ((item - mid_point_coord) * -1) + mid_point_coord
+                list_to_invert[i] = result
+
+        elif isinstance(list_to_invert, int):
+            item = list_to_invert
+            result = ((item - mid_point_coord) * -1) + mid_point_coord
+            list_to_invert = result
+
+        return list_to_invert
 
 
     def __repr__(self):
@@ -137,80 +269,17 @@ def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_f
     return dict_of_scaffold_objects
 
 
-def mirror_lists(mid_point_coord, list_to_invert):
-    # This function takes a list of coordinates and the coordinate of the halfway points
-    # it then goes through the list and inverts it by:
-    # 1. Move it to the left by half
-    # 2. Multiply all coordinates by -1
-    # 3. move to the right by half
-    if isinstance(list_to_invert, list):
-        for i, item in enumerate(list_to_invert):
-            result = ((item - mid_point_coord)*-1)+mid_point_coord
-            list_to_invert[i] = result
-
-    elif isinstance(list_to_invert, int):
-            item = list_to_invert
-            result = ((item - mid_point_coord) * -1) + mid_point_coord
-            list_to_invert = result
-
-    return list_to_invert
-
-def create_subset_fasta_files(list_of_scaffold_names,path_to_input_fasta, output_file_name): # NOT NEEDED ANYMORE
-    '''
-    This function extracts the sequences from specific scaffolds from a big fasta file (containing the entire genome)
-    :param list_of_scaffold_names:
-    :return:
-    '''
-    with open(output_file_name, "w") as temp_file:
-        for seq_record in SeqIO.parse(path_to_input_fasta, "fasta"):
-            if seq_record.id in list_of_scaffold_names:
-                index = list_of_scaffold_names.index(seq_record.id) # get the index of the scaffold ID in the list
-                list_of_scaffold_names.pop(index) # Delete that item from the scaffold list, so at the end we know what we didn't find!
-                SeqIO.write(seq_record, temp_file, "fasta")
-    for item in list_of_scaffold_names:
-        print item, " Was not found in the sequence file"
-    temp_file.close()
-    return None
+def generate_scaffold_object(scaffold_name, path_to_input_fasta, psl_file):
+    for seq_record in SeqIO.parse(path_to_input_fasta, "fasta"):
+        if seq_record.id == scaffold_name:
+            scaffold_object = ScaffoldBNG(seq_record, psl_file)
+    return scaffold_object
 
 
-def create_temp_psl_mapping_file(psl_gene_mapping_file, scaffolds_list, output_prefix="temp", quality_of_mapping="0.95"): # NOT NEEDED ANYMORE
-    '''
-    This function pre-processes our initially large .psl mapping file (From BLAT output) (because they contain information about all genes on the entire genome)
-    We only want rows with genes that mapped to our cmd2 specific scaffolds
-    :param psl_gene_mapping_file:
-    :param scaffolds_list: List of cmd2 related scaffolds
-    :return: The filename of the output file
-    '''
-    # Filter the .psl file so it only includes CMD2 scaffold information
-    psl_gene_mappings = pandas.read_csv(psl_gene_mapping_file, sep='\t', header=None) # load in the gene mapping .psl file
-    psl_gene_mappings = psl_gene_mappings[psl_gene_mappings[13].isin(scaffolds_list)] # Filter so we only keep rows of relevant cmd2 scaffolds
-    # Filtering out genes that don't have at least 90% matching bps of the mRNA
-    psl_gene_mappings = psl_gene_mappings[psl_gene_mappings[0] > quality_of_mapping*(psl_gene_mappings[10])] # The match must include at least <quality_of_mapping>% of the total basepairs in that gene
-    output_filename = output_prefix+"_filtered_gene_mapping.pickle"
-    psl_gene_mappings.to_pickle(output_filename) # save it as a temporary pickle python file!
-    return output_filename
-
-def create_temp_reference_gff_file(ref_genome_gff_file, output_prefix="temp"): # NOT NEEDED ANYMORE
-    '''
-    This function pre-processes our initially large reference genome file Because we only want gene information from the reference file, not cDNA, mRNA, etc.
-
-    Then the ref_gene_information file is the Cassava Reference Genome v6.1 file from Phytozome (Mesculenta_305_v6.1.gene.gff3
-    With the following columns:
-    Start coordinate in reference genome column: 3
-    End coordinate in reference genome column: 4
-    Gene_ID (includes other junk) column: 8
-    ** We only care about rows that have "gene" in column 2, otherwise it also includes mRNA, CDS, etc. information - we only need gene coordinates
 
 
-    :param ref_genome_gff_file: downloaded from phytozome (tested with Cassava v6.1)
-    :return: the filename of the output file
-    '''
-    # and filter the .gff3 file so it includes only rows with gene coordinates (Filter out mRNA, cDNA, and other rows objects)
-    ref_gene_info = pandas.read_csv(ref_genome_gff_file, sep='\t', header=None) # load in the reference gene information file
-    ref_gene_info = ref_gene_info[ref_gene_info[2] == "gene"] # Filter so we only keep rows of gene coordinate information (not cDNA, RNA, etc...)
-    output_filename = output_prefix+"_reference_info.pickle"
-    ref_gene_info.to_pickle(output_filename) # save it as a temporary pickle python file!
-    return output_filename
+
+
 
 
 #####################################
@@ -230,17 +299,36 @@ ref_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
 
 target_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
 
+N_region_min = 100
+ref_scaff_x_offset = 0 # moving the reference scaffold to the left or right
+target_scaff_x_offset = 1000000
+
+
 # TME3 cmd2 scaffold list
-ref_scaffold_list = ['Super-Scaffold_44'] #, 'Super-Scaffold_1951', 'Super-Scaffold_730', 'Super-Scaffold_1022', '001839F', '003097F', '002893F', '006625F', '007880F']
+ref_scaffold = 'Super-Scaffold_44' #, 'Super-Scaffold_1951', 'Super-Scaffold_730', 'Super-Scaffold_1022', '001839F', '003097F', '002893F', '006625F', '007880F']
 
-target_scaffold_list = ["Super-Scaffold_1951"]
-
-
-ref_scaff = generate_scaffold_objects(list_of_scaffold_names=ref_scaffold_list, path_to_input_fasta=genome_fasta_file, psl_file=ref_psl_file)
-
-target_scaff = generate_scaffold_objects(list_of_scaffold_names=target_scaffold_list, path_to_input_fasta=genome_fasta_file, psl_file=target_psl_file)
-
-print ref_scaff
+target_scaffold = "Super-Scaffold_1951"
 
 
-print target_scaff
+ref_scaff = generate_scaffold_object(scaffold_name=ref_scaffold, path_to_input_fasta=genome_fasta_file, psl_file=ref_psl_file)
+
+target_scaff = generate_scaffold_object(scaffold_name=target_scaffold, path_to_input_fasta=genome_fasta_file, psl_file=target_psl_file)
+
+match = MatchObject(ref_scaff, target_scaff)
+
+#################################################
+###### PLOTTING
+#################################################
+
+plt.plot([-1000, -1000], [800, -800], linestyle='-', linewidth=0.0, color='r')
+plt.plot([4500000, 4500000], [800, -800], linestyle='-', linewidth=0.0, color='r')
+
+match.plot_match_scaffolds()
+#plt.savefig(output_name, dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
+
+plt.show()
+
+print ref_scaff.genes
+
+
+print target_scaff.genes
