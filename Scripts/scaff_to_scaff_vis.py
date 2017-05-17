@@ -2,6 +2,69 @@ import pandas
 import matplotlib.pyplot as plt
 from Bio import SeqIO
 
+'''
+You'll need BioPython and matplotlib installed on your machine to make this script work
+Should simply be:
+
+pip install biopython
+pip install matplotlib
+
+(http://biopython.org/wiki/Download)
+
+
+To run this script, edit the part below this (Parameters) to what you like. Then execute this script by typing:
+
+python scaff_to_scaff_vis.py
+
+The output will be saved in the same directory as scevt_output.pdf
+'''
+
+
+#####################################################################################################################
+#########                                      || Parameters ||                                           ###########
+#####################################################################################################################
+
+# Fasta files were the scaffold sequences are included (Can be entire genome files, or just fasta files that contain the scaffold sequence)
+
+reference_fasta_file = "../sampleData/Genome_sequences/TME3_draft.fasta"
+
+target_fasta_file = "../sampleData/Genome_sequences/TME3_draft.fasta"
+
+
+# BLAT output files (.psl) that includes gene mappings onto the genomes which includes the specified scaffolds
+# The paths should be relative to where this script is... or absolute paths
+ref_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
+
+target_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
+
+# Parameters for Plotting
+
+N_region_min = 100 # threshold how big NNNN regions have to be in order to plot them
+ref_scaff_x_offset = 0 # moving the reference scaffold to the left or  for nicer plots
+target_scaff_x_offset = 100000 # moving the target scaffold to the left or right for nicer plots
+
+
+# TME3 cmd2 scaffold list
+#For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
+
+ref_scaffold = 'Super-Scaffold_1022'
+
+target_scaffold = "Super-Scaffold_730"
+
+# Whether you want to invert the reference or target scaffold:
+
+invert_reference = False
+
+invert_target = False
+
+#####################################################################################################################
+#########                                   || End of Parameters ||                                       ###########
+#####################################################################################################################
+
+
+
+
+
 class MatchObject:
     def __init__(self, ref_scaffold_object, target_scaffold_object):
         self.ref_object = ref_scaffold_object
@@ -101,8 +164,6 @@ class MatchObject:
         target_stat = str(self.total_mutual_genes) + "/" + str(self.total_target_genes) + " Genes Match"
         plt.text(self.target_object.length + x_offset + 100000, text_location, target_stat, fontsize=5)
 
-
-
     def plot_unique_genes(self, ref_vertical_pointer, target_vertical_pointer=0, ref_scaff_x_offset=0, target_scaff_x_offset=0):
         # mutual_gene_connectors = {}  # Looks like this: {1:{ref_coord:232, target_coord:5342, name:"masd222"}, 2:...}
         # unique_ref = {} # Looks like this: {23:{"name": ref_gene, "ref_coord": ref_instance[0]}, 44:{"name": ref_gene, "ref_coord": ref_instance[0]}}
@@ -124,7 +185,6 @@ class MatchObject:
             plt.plot(coord + x_offset, vertical_pointer, '|', color='g')  # draw it in green
         return None
 
-
     def plot_mutual_genes(self, ref_vertical_pointer, target_vertical_pointer, ref_scaff_x_offset=0, target_scaff_x_offset=0):
         # mutual_gene_connectors = {}  # Looks like this: {1:{ref_coordinate:232, target_coordinate:5342, name:"masd222"}, 2:...}
 
@@ -132,6 +192,13 @@ class MatchObject:
         for key in self.mutual_genes:
             ref_coord = self.mutual_genes[key]["ref_coordinate"]
             target_coord = self.mutual_genes[key]["target_coordinate"]
+            # Draw gene location of reference scaffold
+            plt.plot(ref_coord + ref_scaff_x_offset, ref_vertical_pointer, '|', color='m')  # draw it in green
+
+            # Draw gene location on target scaffold
+            plt.plot(target_coord + target_scaff_x_offset, target_vertical_pointer, '|', color='m')  # draw it in green
+
+            # Draw connection between scaffolds
             plt.plot([ref_coord + ref_scaff_x_offset, target_coord + target_scaff_x_offset],
                      [ref_vertical_pointer, target_vertical_pointer], linestyle='-', color='m',
                      linewidth=0.1, alpha=0.5)
@@ -340,52 +407,46 @@ def generate_scaffold_object(scaffold_name, path_to_input_fasta, psl_file):
 ## Running the script
 #####################################
 
-## PARAMTERS
+def main():
+    ref_scaff = generate_scaffold_object(scaffold_name=ref_scaffold, path_to_input_fasta=reference_fasta_file,
+                                         psl_file=ref_psl_file)
+
+    target_scaff = generate_scaffold_object(scaffold_name=target_scaffold, path_to_input_fasta=target_fasta_file,
+                                            psl_file=target_psl_file)
 
 
-ref_fasta_file = "TME3_07april_cmd2_region.fasta"
+    # Invert the scaffold object if the user chose to do so:
+    if invert_reference:
+        ref_scaff.invert_scaffold()
+    if invert_target:
+        target_scaff.invert_scaffold()
 
-target_fasta_file = "TME3_07april_cmd2_region.fasta"
+    # create a match instance
+    match = MatchObject(ref_scaff, target_scaff)
 
-genome_fasta_file = "../sampleData/Genome_sequences/TME3_draft.fasta"
+    # PLOTTING
 
-ref_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
+    # This is just to create a standard sized output plot
+    plt.plot([-1000, -1000], [800, -800], linestyle='-', linewidth=0.0, color='r')
+    plt.plot([4500000, 4500000], [800, -800], linestyle='-', linewidth=0.0, color='r')
 
-target_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
+    # Plots the scaffold and genes
+    match.plot_match_scaffolds()
 
-N_region_min = 100
-ref_scaff_x_offset = 0 # moving the reference scaffold to the left or right
-target_scaff_x_offset = 100000
+    # Saves the plot
+    plt.savefig("scevt_output.pdf", dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
 
+    # Show the plot
+    # plt.show()
 
-# TME3 cmd2 scaffold list
-ref_scaffold = 'Super-Scaffold_44' #, 'Super-Scaffold_1951', 'Super-Scaffold_730', 'Super-Scaffold_1022', '001839F', '003097F', '002893F', '006625F', '007880F']
+    print "You can find your plot as: scevt_output.pdf"
 
-target_scaffold = "Super-Scaffold_1951"
-
-####################################################################
-
-ref_scaff = generate_scaffold_object(scaffold_name=ref_scaffold, path_to_input_fasta=genome_fasta_file, psl_file=ref_psl_file)
-
-target_scaff = generate_scaffold_object(scaffold_name=target_scaffold, path_to_input_fasta=genome_fasta_file, psl_file=target_psl_file)
-
-target_scaff.invert_scaffold()
-
-match = MatchObject(ref_scaff, target_scaff)
-
-#################################################
-###### PLOTTING
-#################################################
-
-plt.plot([-1000, -1000], [800, -800], linestyle='-', linewidth=0.0, color='r')
-plt.plot([4500000, 4500000], [800, -800], linestyle='-', linewidth=0.0, color='r')
-
-match.plot_match_scaffolds()
-#plt.savefig(output_name, dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
-
-plt.show()
-
-print ref_scaff.genes
+    print "Have a nice day now and don't forget to take a break every now and then ;)"
+    print "Cheers! \n -your SCEVT staff"
 
 
-print target_scaff.genes
+
+if __name__ == '__main__':
+    main()
+
+
