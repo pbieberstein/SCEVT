@@ -1,4 +1,4 @@
-![SCEVT LOGO] (https://raw.githubusercontent.com/pbieberstein/SCEVT/master/scevt-logo.png "Logo for SCEVT")
+![SCEVT LOGO] (https://raw.githubusercontent.com/pbieberstein/SCEVT/master/scevt-logo.png)
 
 
 SCEVT is a tool to easily visualize and analyze scaffolds during de-novo genome assembly.
