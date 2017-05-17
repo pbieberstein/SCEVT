@@ -1,5 +1,6 @@
 import pandas
 import matplotlib.pyplot as plt
+import re
 from Bio import SeqIO
 
 '''
@@ -371,12 +372,47 @@ class ScaffoldBNG:
 
         return list_to_invert
 
+    def get_reference_mappings(self, reference_gff_file):
+        # Pre-filter the phytozome reference genome gff file so that the following operations are faster...
+        filtered_gff = pre_filter_phytozome_gff_file(reference_gff_file) # this is now a pandas object with all the reference genome information
+
+        # For this scaffold object, go through all the genes (.genes attribute) and find the location of them in the reference genome
+        # Then we generate a new attribute called .gene_mappings which looks like: {1:{"name":Manes.12G059000.1, "scaffold_coordinate": 23213, "reference_chromosome": 12, "reference_coordinate":12432}, 2:...}
+        # NOTE - we only care about starting coordinates, because the graphics are not detailed enough for specific start and end coordinates anyways...
+
+
+
+
+
+        return None
+
 
     def __repr__(self):
         return "<Scaffold Object> with ID: " + self.id
 
+def pre_filter_phytozome_gff_file(gff_file):
+    '''
+    This function pre-processes our initially large reference genome file Because we only want gene information from the reference file, not cDNA, mRNA, etc.
+
+    Then the ref_gene_information file is the Cassava Reference Genome v6.1 file from Phytozome (Mesculenta_305_v6.1.gene.gff3
+    With the following columns:
+    Start coordinate in reference genome column: 3
+    End coordinate in reference genome column: 4
+    Gene_ID (includes other junk) column: 8
+    ** We only care about rows that have "gene" in column 2, otherwise it also includes mRNA, CDS, etc. information - we only need gene coordinates
+
+
+    :param ref_genome_gff_file: downloaded from phytozome (tested with Cassava v6.1)
+    :return: a pandas object that contains the reference gene information
+    '''
+    # filter the .gff3 file so it includes only rows with gene coordinates (Filter out mRNA, cDNA, and other rows objects)
+    ref_gene_info = pandas.read_csv(gff_file, sep='\t', header=None) # load in the reference gene information file
+    ref_gene_info = ref_gene_info[ref_gene_info[2] == "gene"] # Filter so we only keep rows of gene coordinate information (not cDNA, RNA, etc...)
+    return ref_gene_info
 
 def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_file):
+    # Generates a dictionary with multiple scaffold objects as specified.
+    # {scaffold_1: Object, scaffold2: Object...}
     dict_of_scaffold_objects = {}
     for seq_record in SeqIO.parse(path_to_input_fasta, "fasta"):
         if seq_record.id in list_of_scaffold_names:
@@ -390,16 +426,6 @@ def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_f
     return dict_of_scaffold_objects
 
 
-def generate_scaffold_object(scaffold_name, path_to_input_fasta, psl_file):
-    for seq_record in SeqIO.parse(path_to_input_fasta, "fasta"):
-        if seq_record.id == scaffold_name:
-            scaffold_object = ScaffoldBNG(seq_record, psl_file)
-    return scaffold_object
-
-
-
-
-
 
 
 
@@ -408,21 +434,23 @@ def generate_scaffold_object(scaffold_name, path_to_input_fasta, psl_file):
 #####################################
 
 def main():
-    ref_scaff = generate_scaffold_object(scaffold_name=ref_scaffold, path_to_input_fasta=reference_fasta_file,
+    scaff = generate_scaffold_object(scaffold_name=ref_scaffold, path_to_input_fasta=reference_fasta_file,
                                          psl_file=ref_psl_file)
-
-    target_scaff = generate_scaffold_object(scaffold_name=target_scaffold, path_to_input_fasta=target_fasta_file,
-                                            psl_file=target_psl_file)
 
 
     # Invert the scaffold object if the user chose to do so:
+    # TODO: create a list of scaffolds that we want to invert, go through list and invert all of those objects
     if invert_reference:
         ref_scaff.invert_scaffold()
-    if invert_target:
-        target_scaff.invert_scaffold()
 
-    # create a match instance
-    match = MatchObject(ref_scaff, target_scaff)
+
+
+    # Get mappings to the reference genome annotations
+    scaff.get_reference_mappings(reference_gff_file)
+
+
+
+
 
     # PLOTTING
 

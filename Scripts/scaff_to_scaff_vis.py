@@ -376,21 +376,8 @@ class ScaffoldBNG:
         return "<Scaffold Object> with ID: " + self.id
 
 
-def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_file):
-    dict_of_scaffold_objects = {}
-    for seq_record in SeqIO.parse(path_to_input_fasta, "fasta"):
-        if seq_record.id in list_of_scaffold_names:
-            index = list_of_scaffold_names.index(seq_record.id) # get the index of the scaffold ID in the list
-            list_of_scaffold_names.pop(index) # Delete that item from the scaffold list, so at the end we know what we didn't find!
-            scaffold_object = ScaffoldBNG(seq_record, psl_file)
-            dict_of_scaffold_objects[scaffold_object.id] = scaffold_object # Add the seq Record to the dictionary
-
-    for item in list_of_scaffold_names: # Go through the original list and print out all the scaffold names that weren't found in the fasta file...
-        print item, " Was not found in the sequence file"
-    return dict_of_scaffold_objects
-
-
 def generate_scaffold_object(scaffold_name, path_to_input_fasta, psl_file):
+    # Generates one specific scaffold object by scanning through the fasta file, finding the scaffold ID, and creating a scaffold object from that
     for seq_record in SeqIO.parse(path_to_input_fasta, "fasta"):
         if seq_record.id == scaffold_name:
             scaffold_object = ScaffoldBNG(seq_record, psl_file)

@@ -17,3 +17,20 @@ Progress:
 * scaff_to_scaff_vis.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
 * gene_vis.py script is currently being worked on ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
 * snp_vis.py has not been started yet ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
+
+#### Getting Started
+
+**Installing Python Dependencies**
+This script was developed in Python 2.7
+
+Use miniconda to create a new Python environment and install BioPython and matplotlib
+(https://conda.io/docs/install/quick.html)
+```bash
+cd path/to/project
+conda create --prefix ./scevt-env biopython matplotlib
+# This creates a new environment with biopython and matplotlib installed inside the folder "scevt_env"
+```
+(Additional conda help: https://conda.io/docs/_downloads/conda-cheatsheet.pdf)
+
+Once this is completed, you can run the script! Just be sure to edit the paths inside the scripts
+for your relevant files (for now the specifics are inside the script headers)
