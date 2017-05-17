@@ -10,6 +10,6 @@ on both scaffolds (in purple)
 
 #### Currently still in development:
 Progress:
-* scaff_to_scaff_vis.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+) `#c5f015`
-* gene_vis.py script is currently being worked on ![#f03c15](https://placehold.it/15/f03c15/000000?text=+) ``
-* snp_vis.py has not been started yet ![#f03c15](https://placehold.it/15/f03c15/000000?text=+) ``
+* scaff_to_scaff_vis.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
+* gene_vis.py script is currently being worked on ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
+* snp_vis.py has not been started yet ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
