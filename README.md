@@ -9,7 +9,7 @@ and then visualizes the gaps in the scaffolds (in red), the unique genes on the 
 on both scaffolds (in purple)
 
 Eventually, you can expect plots like this:
-![sample_scaffold_vis](https://github.com/pbieberstein/SCEVT/blob/master/sample_output.pdf)
+![sample_scaffold_vis](https://github.com/pbieberstein/SCEVT/raw/master/sample_output.pdf)
 
 
 #### Currently still in development:
