@@ -1,4 +1,3 @@
-# SCEVT
 
 ![SCEVT LOGO](https://raw.githubusercontent.com/pbieberstein/SCEVT/master/scevt-logo.png)
 
@@ -11,7 +10,8 @@ on both scaffolds (in purple)
 
 #### Currently still in development:
 Progress:
-* scaff_to_scaff_vis.py script is DONE
-* gene_vis.py script is currently being worked on
-* snp_vis.py has not been started yet
-
+```diff
++ scaff_to_scaff_vis.py script is DONE
+- gene_vis.py script is currently being worked on
+- snp_vis.py has not been started yet
+```
