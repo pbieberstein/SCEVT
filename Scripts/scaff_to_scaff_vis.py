@@ -1,8 +1,5 @@
 import pandas
-import pickle
-import re
 import matplotlib.pyplot as plt
-import random
 from Bio import SeqIO
 
 class MatchObject:
@@ -15,7 +12,7 @@ class MatchObject:
         # New awesome characteristics of this class
         self.unique_ref = unique_ref_genes
         self.unique_target = unique_target_genes
-        self.mutual_genes = mutual_gene_connectors
+        self.mutual_genes = mutual_gene_connectors # looks like {1:{ref_coord:232, target_coord:5342, name:"masd222"}, 2:...}
         self.total_ref_genes = total_ref_genes
         self.total_target_genes = total_target_genes
         self.total_mutual_genes = total_mutual_genes
@@ -37,7 +34,7 @@ class MatchObject:
         target_scaffold = self.target_object
 
         mutual_gene_connectors = {}  # Looks like this: {1:{ref_coord:232, target_coord:5342, name:"masd222"}, 2:...}
-        unique_ref_genes = {}
+        unique_ref_genes = {} # Looks like this: {23:{"name": ref_gene, "ref_coord": ref_instance[0]}, 44:{"name": ref_gene, "ref_coord": ref_instance[0]}}
         unique_target_genes = {}
         match_number = 0
         total_ref_genes = 0
@@ -50,18 +47,18 @@ class MatchObject:
                 for ref_instance in ref_scaffold.genes[ref_gene]: # If yes, get each coordinate instance of that gene from the ref_scaffold
                     for target_instance in target_scaffold.genes[ref_gene]: # for each instance on the ref_scaffold, get each instance of that gene on the target Scaffold
 
-                        mutual_gene_connectors[match_number] = {"name": ref_gene,"ref_coord":ref_instance[0], "target_coord": target_instance[0]} # build up mutual gene dictionary
+                        mutual_gene_connectors[match_number] = {"name": ref_gene,"ref_coordinate":ref_instance[0], "target_coordinate": target_instance[0]} # build up mutual gene dictionary
                         match_number += 1 # increase counter for mutual genes
             else: # if the gene does not exist on target scaffold, add it to a dictionary that only contains genes that are unique to the ref_scaffold
                 for ref_instance in ref_scaffold.genes[ref_gene]: #
-                    unique_ref_genes[match_number] = {"name": ref_gene, "ref_coord": ref_instance[0]}  # build up unique to reference scaffold gene dictionary
+                    unique_ref_genes[match_number] = {"name": ref_gene, "coordinate": ref_instance[0]}  # build up unique to reference scaffold gene dictionary
                     match_number += 1
 
         for target_gene in target_scaffold.genes: # iterate through all target scaffold genes
             total_target_genes += 1
             if target_gene not in ref_scaffold.genes: # if the gene does not exist on the reference scaffold
                 for target_instance in target_scaffold.genes[target_gene]: # add each instance of that gene to the unique to target dictionary
-                    unique_target_genes[match_number] = {"name": target_gene, "target_coord": target_instance[0]}
+                    unique_target_genes[match_number] = {"name": target_gene, "coordinate": target_instance[0]}
                     match_number += 1
 
         # Calculate how many genes matched out of all genes
@@ -91,22 +88,74 @@ class MatchObject:
         # the scaffold name
         plt.text(0 + x_offset, text_location, scaffold_object.id, fontsize=5)
 
+    def plot_statistics(self, ref_vertical_pointer, target_vertical_pointer, ref_scaff_x_offset=0, target_scaff_x_offset=0):
+        # draw statistics for reference scaffold
+        text_location = ref_vertical_pointer - 10
+        x_offset = ref_scaff_x_offset
+        reference_stat = str(self.total_mutual_genes) + "/" + str(self.total_ref_genes) + " Genes Match"
+        plt.text(self.ref_object.length + x_offset + 100000, text_location, reference_stat, fontsize=5)
+
+        # draw statistics for target scaffold
+        text_location = target_vertical_pointer - 10
+        x_offset = target_scaff_x_offset
+        target_stat = str(self.total_mutual_genes) + "/" + str(self.total_target_genes) + " Genes Match"
+        plt.text(self.target_object.length + x_offset + 100000, text_location, target_stat, fontsize=5)
 
 
 
+    def plot_unique_genes(self, ref_vertical_pointer, target_vertical_pointer=0, ref_scaff_x_offset=0, target_scaff_x_offset=0):
+        # mutual_gene_connectors = {}  # Looks like this: {1:{ref_coord:232, target_coord:5342, name:"masd222"}, 2:...}
+        # unique_ref = {} # Looks like this: {23:{"name": ref_gene, "ref_coord": ref_instance[0]}, 44:{"name": ref_gene, "ref_coord": ref_instance[0]}}
 
-    def mutual_gene_connections(self, vertical_pointer_ref=100, vertical_pointer_target=-100):
+        # First, draw unique genes on reference scaffold
+        x_offset = ref_scaff_x_offset
+        vertical_pointer = ref_vertical_pointer
+        for key in self.unique_ref:
+            #name = self.unique_ref[key]["name"]
+            coord = self.unique_ref[key]["coordinate"]
+            plt.plot(coord + x_offset, vertical_pointer, '|', color='g')  # draw it in green
+
+        # Draw unique genes on target scaffold
+        x_offset = target_scaff_x_offset
+        vertical_pointer = target_vertical_pointer
+        for key in self.unique_target:
+            #name = self.unique_target[key]["name"]
+            coord = self.unique_target[key]["coordinate"]
+            plt.plot(coord + x_offset, vertical_pointer, '|', color='g')  # draw it in green
         return None
 
-    def plot_match_scaffolds(self):
 
+    def plot_mutual_genes(self, ref_vertical_pointer, target_vertical_pointer, ref_scaff_x_offset=0, target_scaff_x_offset=0):
+        # mutual_gene_connectors = {}  # Looks like this: {1:{ref_coordinate:232, target_coordinate:5342, name:"masd222"}, 2:...}
+
+        # get the coordinates for each match
+        for key in self.mutual_genes:
+            ref_coord = self.mutual_genes[key]["ref_coordinate"]
+            target_coord = self.mutual_genes[key]["target_coordinate"]
+            plt.plot([ref_coord + ref_scaff_x_offset, target_coord + target_scaff_x_offset],
+                     [ref_vertical_pointer, target_vertical_pointer], linestyle='-', color='m',
+                     linewidth=0.1, alpha=0.5)
+        return None
+
+
+
+    def plot_match_scaffolds(self):
+        ref_vertical_pointer = 200
+        target_vertical_pointer = -200
         # Plot Reference Scaffold
-        self.plot_scaffold(vertical_pointer=200, scaffold_object=self.ref_object, x_offset=ref_scaff_x_offset)
+        self.plot_scaffold(vertical_pointer=ref_vertical_pointer, scaffold_object=self.ref_object, x_offset=ref_scaff_x_offset)
 
         # Plot Target Scaffold
-        self.plot_scaffold(vertical_pointer=-200, scaffold_object=self.target_object, x_offset=target_scaff_x_offset)
+        self.plot_scaffold(vertical_pointer=target_vertical_pointer, scaffold_object=self.target_object, x_offset=target_scaff_x_offset)
 
+        # Plot Stats (# genes out of # are mutual)
+        self.plot_statistics(ref_vertical_pointer, target_vertical_pointer, ref_scaff_x_offset, target_scaff_x_offset)
 
+        # Plot the Unique genes
+        self.plot_unique_genes(ref_vertical_pointer, target_vertical_pointer, ref_scaff_x_offset, target_scaff_x_offset)
+
+        # Plot the mutual genes
+        self.plot_mutual_genes(ref_vertical_pointer, target_vertical_pointer, ref_scaff_x_offset, target_scaff_x_offset)
 
 
 
@@ -217,22 +266,27 @@ class ScaffoldBNG:
 
 
     def invert_scaffold(self):
+        '''
+        This function aims to invert this scaffold including its NNN regions, and its gene locations
+        :return:
+        '''
         half = int(self.length/2)
         for key in self.gaps: # invert the gap coordinates
-            gaps[key] = mirror_lists(half, gaps[key]) # give it the midpoint of the object and the list of coordinates it should invert on that object
+            self.gaps[key] = self.mirror_lists(half, self.gaps[key]) # give it the midpoint of the object and the list of coordinates it should invert on that object
 
         new_gene_coordinates = {}
         for key in self.genes: # {"gene1:[[22,532],[2343,64545]],"gene2:[[2,44]]...}
-            for instance in genes[key]:
+            for instance in self.genes[key]:
                 if key in new_gene_coordinates:
-                    new_gene_coordinates[key].append(mirror_lists(half, instance))
+                    new_gene_coordinates[key].append(self.mirror_lists(half, instance))
                 else:
-                    new_gene_coordinates[key] = [mirror_lists(half, instance)]
+                    new_gene_coordinates[key] = [self.mirror_lists(half, instance)]
         self.genes = new_gene_coordinates
         print self.id + " was Inverted."
         return self.genes
 
     def mirror_lists(self, mid_point_coord, list_to_invert):
+        # Helper function for the invert method
         # This function takes a list of coordinates and the coordinate of the halfway points
         # it then goes through the list and inverts it by:
         # 1. Move it to the left by half
@@ -301,7 +355,7 @@ target_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
 
 N_region_min = 100
 ref_scaff_x_offset = 0 # moving the reference scaffold to the left or right
-target_scaff_x_offset = 1000000
+target_scaff_x_offset = 100000
 
 
 # TME3 cmd2 scaffold list
@@ -309,10 +363,13 @@ ref_scaffold = 'Super-Scaffold_44' #, 'Super-Scaffold_1951', 'Super-Scaffold_730
 
 target_scaffold = "Super-Scaffold_1951"
 
+####################################################################
 
 ref_scaff = generate_scaffold_object(scaffold_name=ref_scaffold, path_to_input_fasta=genome_fasta_file, psl_file=ref_psl_file)
 
 target_scaff = generate_scaffold_object(scaffold_name=target_scaffold, path_to_input_fasta=genome_fasta_file, psl_file=target_psl_file)
+
+target_scaff.invert_scaffold()
 
 match = MatchObject(ref_scaff, target_scaff)
 
