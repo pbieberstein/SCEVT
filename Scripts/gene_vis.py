@@ -38,6 +38,9 @@ ref_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
 
 target_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
 
+# Reference genome information file (.gff3) from Phytozome (I deleted the first 3 header rows for simplicity)
+reference_gff_file = "../sampleData/Reference_genome_info/Mesculenta_305_v6.1.gene.gff3"
+
 # Parameters for Plotting
 
 N_region_min = 100 # threshold how big NNNN regions have to be in order to plot them
@@ -48,9 +51,8 @@ target_scaff_x_offset = 100000 # moving the target scaffold to the left or right
 # TME3 cmd2 scaffold list
 #For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
 
-ref_scaffold = 'Super-Scaffold_1022'
+list_of_scaffolds = ['Super-Scaffold_1022', 'Super-Scaffold_730', 'Super_scaffold_XX']
 
-target_scaffold = "Super-Scaffold_730"
 
 # Whether you want to invert the reference or target scaffold:
 
@@ -312,10 +314,16 @@ class ScaffoldBNG:
         # Filtering out genes that don't have at least 90% matching bps of the mRNA
         psl_gene_mappings = psl_gene_mappings[psl_gene_mappings[0] > quality_of_mapping * (psl_gene_mappings[10])]
 
+
+        pattern = re.compile('.*.(?=.\d)')  # Pattern matching to gene underlying gene name instead of CDS names...
+
         for index, row in psl_gene_mappings.iterrows():
                 if row[13] == self.id:
                     coordinate_range = [row[15], row[16]]
                     gene_name = row[9]
+                    gene_name = re.match(pattern,
+                                         gene_name).group()  # This should erase the CDS specifications at the end of the gene names ".3"
+
                     almost_same = False
                     if gene_name in gene_dict:
                         for coordinates in gene_dict[gene_name]: # coordinates will be a list of start & end [start, end]
@@ -380,15 +388,54 @@ class ScaffoldBNG:
         # Then we generate a new attribute called .gene_mappings which looks like: {1:{"name":Manes.12G059000.1, "scaffold_coordinate": 23213, "reference_chromosome": 12, "reference_coordinate":12432}, 2:...}
         # NOTE - we only care about starting coordinates, because the graphics are not detailed enough for specific start and end coordinates anyways...
 
+        # It is important that we match all same genes on scaffold with all same genes on the reference genome... (not just pick one of them to connect)
+        # self.genes => {'Manes.12G061900.1': [[1404095, 1405697]], 'Manes.12G059000.1': [[2613631, 2614138],[12,233]]...}
 
+        gene_mappings = {}
 
+        ref_genome_loc = get_gene_locations_from_reference(filtered_gff) # puts all reference genome locations in one big dictionary... hopefully fast to search through :/
+        match_num = 0
+        for gene_name in self.genes:
+            for scaff_instance in self.genes[gene_name]: # Now scaff_instance is a specific coordinate of that gene on the scaffold
+                scaff_instance_coordinate = scaff_instance[0] # Now we extracted only the starting coordinate of that instance (makes it easier later b/c we usually only need starting coordinate)
+                #print "ref_genome: ",ref_genome_loc
+                #print "Gene name:", gene_name
+                for ref_instance in ref_genome_loc[gene_name]: # accesses all instances of that gene on the reference genome
+                    match_num += 1
+                    gene_mappings[match_num] = {"name":gene_name, "reference_chromosome": ref_instance['chromosome'], "reference_coordinate":ref_instance['start_coordinate'], "scaffold_coordinate": scaff_instance_coordinate}
+        # {1:{"name":Manes.12G059000.1, "scaffold_coordinate": 23213, "reference_chromosome": 12, "reference_coordinate":12432}, 2:...
 
-
+        self.gene_mappings = gene_mappings
+        self.reference_mapping_done = True
+        #print self.gene_mappings
         return None
 
 
     def __repr__(self):
         return "<Scaffold Object> with ID: " + self.id
+
+def get_gene_locations_from_reference(gff_pandas_object):
+    # This function generates a ref_genome_loc dictionary which contains the coordinates for each gene in the reference genome
+    # {"Manes.12G059000.1":[{'chromsome':chr12, 'start_coordinate': 12, 'end_coordinate': 421}, {'chromsome':chr11, 'start_coordinate': 1231, 'end_coordinate': 5331}], ...}
+    # NOTE - dictionary in list in dictionary...
+    ref_genome_loc = {}
+    pattern = re.compile('ID.*.(?=.v6.1;)')  # for pattern matching in regular expressions when extracting gene_id
+
+    for index, row in gff_pandas_object.iterrows():
+        chr_name = row[0]
+        start_coord = float(row[3])
+        end_coord = float(row[4])
+        gene_name = row[8]
+        # orignally looks like this 'ID=Manes.01G000600.v6.1;Name=Manes.01G000600;ancestorIdentifier=cassava4.1_022534m.g.v4.1'
+        # So I need to extract just the gene ID which comes right before ".v6.1;"...
+        gene_name = re.match(pattern, gene_name).group()  # Extracts the gene name from the big string....
+        gene_name = gene_name[3:]  # To delete the beginning 'ID=' part
+        if gene_name in ref_genome_loc:  # The key is already in there so we need to append the additional coordinates
+            ref_genome_loc[gene_name].append({'chromsome':chr_name, 'start_coordinate': start_coord, 'end_coordinate': end_coord})
+        else:  # The key doesn't exist yet, so we can initiallize the key and add the first coordinates
+            ref_genome_loc[gene_name] = [{'chromosome':chr_name, 'start_coordinate': start_coord, 'end_coordinate': end_coord}]
+
+    return ref_genome_loc
 
 def pre_filter_phytozome_gff_file(gff_file):
     '''
@@ -414,18 +461,22 @@ def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_f
     # Generates a dictionary with multiple scaffold objects as specified.
     # {scaffold_1: Object, scaffold2: Object...}
     dict_of_scaffold_objects = {}
+    list_of_found_scaffolds = []
+
     for seq_record in SeqIO.parse(path_to_input_fasta, "fasta"):
         if seq_record.id in list_of_scaffold_names:
             index = list_of_scaffold_names.index(seq_record.id) # get the index of the scaffold ID in the list
-            list_of_scaffold_names.pop(index) # Delete that item from the scaffold list, so at the end we know what we didn't find!
-            scaffold_object = ScaffoldBNG(seq_record, psl_file)
-            dict_of_scaffold_objects[scaffold_object.id] = scaffold_object # Add the seq Record to the dictionary
+            name = list_of_scaffold_names[index] # Delete that item from the scaffold list, so at the end we know what we didn't find!
+            list_of_found_scaffolds.append(name)
+            dict_of_scaffold_objects[seq_record.id] = ScaffoldBNG(seq_record, psl_file) # Add the seq Record to the dictionary
 
-    for item in list_of_scaffold_names: # Go through the original list and print out all the scaffold names that weren't found in the fasta file...
+    not_found = list(set(list_of_scaffold_names)-set(list_of_found_scaffolds))
+
+    for item in not_found: # Go through the original list and print out all the scaffold names that weren't found in the fasta file...
         print item, " Was not found in the sequence file"
+
     return dict_of_scaffold_objects
-
-
+    # TODO: THeres a bug here
 
 
 
@@ -433,48 +484,41 @@ def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_f
 ## Running the script
 #####################################
 
-def main():
-    scaff = generate_scaffold_object(scaffold_name=ref_scaffold, path_to_input_fasta=reference_fasta_file,
-                                         psl_file=ref_psl_file)
+scaff_dict = generate_scaffold_objects(list_of_scaffold_names=list_of_scaffolds, path_to_input_fasta=reference_fasta_file,
+                                           psl_file=ref_psl_file)
 
 
-    # Invert the scaffold object if the user chose to do so:
-    # TODO: create a list of scaffolds that we want to invert, go through list and invert all of those objects
-    if invert_reference:
-        ref_scaff.invert_scaffold()
+# Invert the scaffold object if the user chose to do so:
+# TODO: create a list of scaffolds that we want to invert, go through list and invert all of those objects
+if invert_reference:
+    ref_scaff.invert_scaffold()
 
 
+print scaff_dict
+# Get mappings to the reference genome annotations
+for key in scaff_dict:
+    scaff_dict[key].get_reference_mappings(reference_gff_file)
 
-    # Get mappings to the reference genome annotations
-    scaff.get_reference_mappings(reference_gff_file)
+for key in scaff_dict:
+    print scaff_dict[key].reference_mapping_done
 
+# PLOTTING
 
+# This is just to create a standard sized output plot
+plt.plot([-1000, -1000], [800, -800], linestyle='-', linewidth=0.0, color='r')
+plt.plot([4500000, 4500000], [800, -800], linestyle='-', linewidth=0.0, color='r')
 
+# Plots the scaffold and genes
+#match.plot_match_scaffolds()
 
+# Saves the plot
+#plt.savefig("scevt_output.pdf", dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
 
-    # PLOTTING
+# Show the plot
+# plt.show()
 
-    # This is just to create a standard sized output plot
-    plt.plot([-1000, -1000], [800, -800], linestyle='-', linewidth=0.0, color='r')
-    plt.plot([4500000, 4500000], [800, -800], linestyle='-', linewidth=0.0, color='r')
+print "You can find your plot as: scevt_output.pdf"
 
-    # Plots the scaffold and genes
-    match.plot_match_scaffolds()
-
-    # Saves the plot
-    plt.savefig("scevt_output.pdf", dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
-
-    # Show the plot
-    # plt.show()
-
-    print "You can find your plot as: scevt_output.pdf"
-
-    print "Have a nice day now and don't forget to take a break every now and then ;)"
-    print "Cheers! \n -your SCEVT staff"
-
-
-
-if __name__ == '__main__':
-    main()
-
+print "Have a nice day now and don't forget to take a break every now and then ;)"
+print "Cheers! \n -your SCEVT staff"
 

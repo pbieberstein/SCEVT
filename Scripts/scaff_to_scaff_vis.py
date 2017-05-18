@@ -1,13 +1,12 @@
 import pandas
 import matplotlib.pyplot as plt
 from Bio import SeqIO
+import os
 
 '''
 You'll need BioPython and matplotlib installed on your machine to make this script work
 Should simply be:
 
-pip install biopython
-pip install matplotlib
 
 (http://biopython.org/wiki/Download)
 
@@ -26,34 +25,34 @@ The output will be saved in the same directory as scevt_output.pdf
 
 # Fasta files were the scaffold sequences are included (Can be entire genome files, or just fasta files that contain the scaffold sequence)
 
-reference_fasta_file = "../sampleData/Genome_sequences/TME3_draft.fasta"
+reference_fasta_file = "../sampleData/Genome_sequences/60444_07april_cmd2_region.fasta"
 
-target_fasta_file = "../sampleData/Genome_sequences/TME3_draft.fasta"
+target_fasta_file = "../sampleData/Genome_sequences/60444_07april_cmd2_region.fasta"
 
 
 # BLAT output files (.psl) that includes gene mappings onto the genomes which includes the specified scaffolds
 # The paths should be relative to where this script is... or absolute paths
-ref_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
+ref_psl_file = "../sampleData/Gene_BLAT_mappings/60444_BNG_plus_notscaff.psl"
 
-target_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
+target_psl_file = "../sampleData/Gene_BLAT_mappings/60444_BNG_plus_notscaff.psl"
 
 # Parameters for Plotting
 
 N_region_min = 100 # threshold how big NNNN regions have to be in order to plot them
 ref_scaff_x_offset = 0 # moving the reference scaffold to the left or  for nicer plots
-target_scaff_x_offset = 100000 # moving the target scaffold to the left or right for nicer plots
+target_scaff_x_offset = 300000 # moving the target scaffold to the left or right for nicer plots
 
 
 # TME3 cmd2 scaffold list
 #For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
 
-ref_scaffold = 'Super-Scaffold_1022'
+ref_scaffold = 'Super-Scaffold_111'
 
-target_scaffold = "Super-Scaffold_730"
+target_scaffold = "Super-Scaffold_29"
 
 # Whether you want to invert the reference or target scaffold:
 
-invert_reference = False
+invert_reference = True
 
 invert_target = False
 
@@ -423,10 +422,12 @@ def main():
     # Saves the plot
     plt.savefig("scevt_output.pdf", dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
 
+    cwd = os.getcwd()
+
     # Show the plot
     # plt.show()
 
-    print "You can find your plot as: scevt_output.pdf"
+    print "You can find your plot at: %s/scevt_output.pdf" % cwd
 
     print "Have a nice day now and don't forget to take a break every now and then ;)"
     print "Cheers! \n -your SCEVT staff"
@@ -435,5 +436,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
