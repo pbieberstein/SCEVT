@@ -305,7 +305,6 @@ class ScaffoldBNG:
         plt.text(100000+x_offset+self.length, text_location, stats_text, fontsize=5)
 
     def plot_all_genes(self, vertical_pointer=100, x_offset=0, unique_color='c', mutual_color='g', line_color='g'):
-        # TODO: THis function just go through all gene matches and draw the genes, unique & mutual and connects!
         print "Plotting all genes for: ", self.id
         # access all the genes, for each that is on the right chromosome, draw the connection, if not, just draw it with the other color
         for match in self.gene_mappings:
@@ -480,9 +479,7 @@ def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_f
 
     for item in not_found: # Go through the original list and print out all the scaffold names that weren't found in the fasta file...
         print item, " Was not found in the sequence file"
-
     return dict_of_scaffold_objects
-    # TODO: THeres a bug here
 
 
 

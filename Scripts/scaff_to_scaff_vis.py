@@ -173,7 +173,7 @@ class MatchObject:
         for key in self.unique_ref:
             #name = self.unique_ref[key]["name"]
             coord = self.unique_ref[key]["coordinate"]
-            plt.plot(coord + x_offset, vertical_pointer, '|', color='g')  # draw it in green
+            plot_thin_marker(coord + x_offset, vertical_pointer, color='g')  # draw it in green
 
         # Draw unique genes on target scaffold
         x_offset = target_scaff_x_offset
@@ -181,7 +181,7 @@ class MatchObject:
         for key in self.unique_target:
             #name = self.unique_target[key]["name"]
             coord = self.unique_target[key]["coordinate"]
-            plt.plot(coord + x_offset, vertical_pointer, '|', color='g')  # draw it in green
+            plot_thin_marker(coord + x_offset, vertical_pointer, color='g')  # draw it in green
         return None
 
     def plot_mutual_genes(self, ref_vertical_pointer, target_vertical_pointer, ref_scaff_x_offset=0, target_scaff_x_offset=0):
@@ -192,10 +192,10 @@ class MatchObject:
             ref_coord = self.mutual_genes[key]["ref_coordinate"]
             target_coord = self.mutual_genes[key]["target_coordinate"]
             # Draw gene location of reference scaffold
-            plt.plot(ref_coord + ref_scaff_x_offset, ref_vertical_pointer, '|', color='m')  # draw it in green
+            plot_thin_marker(ref_coord + ref_scaff_x_offset, ref_vertical_pointer, color='m')  # draw it in green
 
             # Draw gene location on target scaffold
-            plt.plot(target_coord + target_scaff_x_offset, target_vertical_pointer, '|', color='m')  # draw it in green
+            plot_thin_marker(target_coord + target_scaff_x_offset, target_vertical_pointer, color='m')  # draw it in green
 
             # Draw connection between scaffolds
             plt.plot([ref_coord + ref_scaff_x_offset, target_coord + target_scaff_x_offset],
@@ -383,7 +383,15 @@ def generate_scaffold_object(scaffold_name, path_to_input_fasta, psl_file):
     return scaffold_object
 
 
-
+def plot_thin_marker(x, y, color):
+    # This function draws very thin vertical lines by doing it with horizontal lines because vertical bars are too fat!
+    # plt.plot(scaffold_coordinate + x_offset, vertical_pointer, '|', color=mutual_color)  # draw it in green
+    # A hack to get the lines of the above command thinner...
+    offsetter = -12
+    for i in range(1, 60):
+        offsetter += .4
+        plt.plot([x, x+1000], [y+offsetter, y+offsetter], color=color, linestyle='-', linewidth=0.1, alpha=1)
+    return None
 
 
 
