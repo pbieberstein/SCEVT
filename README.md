@@ -10,20 +10,11 @@ SCEVT consists of two scripts:
 
 Complete the getting started steps to install the dependencies, and then go to the 
 specific Docs to use the tools: 
-* scaal.py 
-* scaphy.py
+* [scaal.py](https://github.com/pbieberstein/SCEVT/wiki/Overview) 
+* [scaphy.py](https://github.com/pbieberstein/SCEVT/wiki/Overview)
 
 
 
-
-
-
-Here is an sample output from the scaff_to_scaff_vis.py script which takes two scaffolds sequences and BLAT gene mappings,
-and then visualizes the gaps in the scaffolds (in red), the unique genes on the scaffolds (in green) and the genes that are present
-on both scaffolds (in purple)
-
-Eventually, you can expect plots like this:
-![sample_scaffold_vis](https://github.com/pbieberstein/SCEVT/blob/master/sample_output.png)
 
 
 #### Progress:
@@ -31,9 +22,6 @@ Progress:
 * scaal.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
 * scaphy.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
 * Documentation is currently being worked on ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
-
-
-
 
 
 
