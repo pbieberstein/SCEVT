@@ -9,18 +9,14 @@ import os
 
 
 '''
+This script was written using Python 2.7
 You'll need BioPython and matplotlib installed on your machine to make this script work
-Should simply be:
-
-pip install biopython
-pip install matplotlib
-
-(http://biopython.org/wiki/Download)
+This is easiest done by downloading either miniconda or the entire anaconda package
 
 
 To run this script, edit the part below this (Parameters) to what you like. Then execute this script by typing:
 
-python scaff_to_scaff_vis.py
+python gene_vis.py
 
 The output will be saved in the same directory as scevt_output.pdf
 '''
