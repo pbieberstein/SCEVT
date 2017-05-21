@@ -1,5 +1,5 @@
 
-![SCEVT LOGO](https://raw.githubusercontent.com/pbieberstein/SCEVT/master/scevt-logo.png)
+![SCEVT LOGO](https://github.com/pbieberstein/SCEVT/blob/master/documentation/scevt-logo.png)
 
 
 SCEVT is a tool to easily visualize and analyze scaffolds during de-novo genome assembly.
@@ -8,17 +8,14 @@ SCEVT consists of two scripts:
 * scaal.py
 * scaphy.py
 
-Complete the getting started steps to install the dependencies, and then go to the 
-specific Docs to use the tools: 
-* [scaal.py](https://github.com/pbieberstein/SCEVT/wiki/Overview) 
-* [scaphy.py](https://github.com/pbieberstein/SCEVT/wiki/Overview)
+[Whats the difference?](https://github.com/pbieberstein/SCEVT/wiki/Overview) 
+
 
 
 
 
 
 #### Progress:
-Progress:
 * scaal.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
 * scaphy.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
 * Documentation is currently being worked on ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
