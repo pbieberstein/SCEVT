@@ -38,8 +38,7 @@ reference_gff_file = "../Data/Reference_genome_info/Mesculenta_305_v6.1.gene.gff
 # Parameters for Plotting
 
 N_region_min = 100  # threshold how big NNNN regions have to be in order to plot them
-ref_scaff_x_offset = 0  # moving the reference scaffold to the left or  for nicer plots
-target_scaff_x_offset = 100000  # moving the target scaffold to the left or right for nicer plots
+
 
 # TME3 cmd2 scaffold list
 # For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
