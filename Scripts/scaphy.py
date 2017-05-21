@@ -1,12 +1,11 @@
 import pandas
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
-import matplotlib.cm as cmx
 import re
 from Bio import SeqIO
 from numpy import sign, mean
 import os
-
+from datetime import datetime
 '''
 This script was written using Python 2.7
 You'll need BioPython and matplotlib installed on your machine to make this script work
@@ -15,7 +14,7 @@ This is easiest done by downloading either miniconda or the entire anaconda pack
 
 To run this script, edit the part below this (Parameters) to what you like. Then execute this script by typing:
 
-python gene_vis.py
+python scaphy.py
 
 The output will be saved in the same directory as scevt_output.pdf
 '''
@@ -27,14 +26,14 @@ The output will be saved in the same directory as scevt_output.pdf
 ## Fasta files were the scaffold sequences are included (Can be entire genome files, or just fasta files that contain the scaffold sequence)
 # Needed to draw scaffolds with their gaps
 
-reference_fasta_file = "../sampleData/Genome_sequences/TME3_draft.fasta"
+reference_fasta_file = "../Data/Genome_sequences/TME3_draft.fasta"
 
 ## BLAT output files (.psl) that includes gene mappings onto the genome which includes the specified scaffolds
 # The paths should be relative to where this script is... or absolute paths
-ref_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
+ref_psl_file = "../Data/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
 
 # Reference genome information file (.gff3) from Phytozome (I deleted the first 3 header rows for simplicity)
-reference_gff_file = "../sampleData/Reference_genome_info/Mesculenta_305_v6.1.gene.gff3"
+reference_gff_file = "../Data/Reference_genome_info/Mesculenta_305_v6.1.gene.gff3"
 
 # Parameters for Plotting
 
@@ -64,10 +63,21 @@ scaffolds_to_invert = ['Super-Scaffold_44']
 # y: yellow
 # k: black
 # w: white
-manual_plotting = {'Super-Scaffold_1022': {"x_offset":100000, "vertical_pointer": 100, "line_color": 'b'},
-                   'Super-Scaffold_44': {"x_offset":100000, "vertical_pointer": 100, "line_color": 'b'},
-                   '000979F': {"x_offset":100000, "vertical_pointer": 100, "line_color": 'b'}
+
+# If you want automatic plotting, simply comment this dictionary with the block comments: '''...'''
+# if you want manual plotting, un-comment this and specify the x_offset, vertical_pointer and line_color for each scaffold
+'''
+manual_plotting = {'Super-Scaffold_1022': {"x_offset":1000000,
+                                           "vertical_pointer": -100,
+                                           "line_color": 'b'},
+                   'Super-Scaffold_44': {"x_offset":1000000,
+                                         "vertical_pointer": 100,
+                                         "line_color": 'r'},
+                   '000979F': {"x_offset":2000000,
+                               "vertical_pointer": -200,
+                               "line_color": 'b'}
                    }
+'''
 
 ## Size of Reference Chromosome on Plot:
 # pseudo_length = 31578400 # estimated chromosome 12 length from phytozome Cassava v6.1
@@ -122,10 +132,6 @@ class OverallPlotter:
         return None
 
     def plot_scaffolds_and_genes(self):
-        # get colors for this scaffold
-
-
-
         # draw the objects with the given parameters
         for scaffold in self.scaffolds:
             object = self.scaffolds[scaffold]
@@ -135,9 +141,29 @@ class OverallPlotter:
 
         return None
 
-    def manual_scaffold_plotter(self):
+    def manual_scaffold_plotter(self, manual_plotting):
+        '''
+        This script plots the scaffolds with manual arrangments
+        :param manual_plotting:
+        :return:
+        '''
         # here all variables will have to be defined, and then it just draws the scaffolds exactly how we want it to
         # with vertical pointer and x_offsets set
+        self.plot_reference_chromosome()
+        # Give manual Plotting attributes
+        for scaffold in manual_plotting: # only iterate trough the ones we have specified in manual dictionary
+            object = self.scaffolds[scaffold]
+
+            # saves the manual attributes to the objects themselves
+            object.get_manual_attributes(manual_plotting)
+
+            object.plot_scaffold(vertical_pointer=object.vertical_pointer, x_offset=object.x_offset)
+            object.plot_all_genes(vertical_pointer=object.vertical_pointer, x_offset=object.x_offset, mutual_color=self.current_chr_gene_color , unique_color=self.remote_gene_color, line_color=object.line_color)
+
+        return None
+
+
+
         return None
 
     def color_chooser(self):
@@ -285,7 +311,7 @@ class ScaffoldBNG:
         return None
 
     def plot_scaffold(self, vertical_pointer=100, x_offset=0):
-        print "Plotting: " + self.id + "..."
+        print("Plotting: " + self.id + "...")
         plt.plot([0 + x_offset, self.length + x_offset], [vertical_pointer, vertical_pointer], color='k',
                  linestyle='-', linewidth=4)
         text_location = vertical_pointer + 20
@@ -313,7 +339,7 @@ class ScaffoldBNG:
         plt.text(100000 + x_offset + self.length, text_location, stats_text, fontsize=5)
 
     def plot_all_genes(self, vertical_pointer=100, x_offset=0, unique_color='c', mutual_color='y', line_color='c'):
-        print "Plotting all genes for: ", self.id
+        print("Plotting all genes for: ", self.id)
         # access all the genes, for each that is on the right chromosome, draw the connection, if not, just draw it with the other color
         for match in self.gene_mappings:
             gene_dictionary = self.gene_mappings[match]
@@ -360,7 +386,7 @@ class ScaffoldBNG:
             self.gene_mappings[instance]['scaffold_coordinate'] = self.mirror_lists(half, match_dictionary[
                 'scaffold_coordinate'])
 
-        print self.id + " was Inverted."
+        print(self.id + " was Inverted.")
         return self.genes
 
     def mirror_lists(self, mid_point_coord, list_to_invert):
@@ -417,6 +443,13 @@ class ScaffoldBNG:
         self.gene_mappings = gene_mappings
         self.calculate_automatic_offset_and_mapping_stats()  # just calling it at the end of this function because now we have enough information
         return None
+
+    def get_manual_attributes(self, manual_dicationary):
+        # This  gives the scaffold object the manual x_offset and vertical pointer values from the manual specification dic
+        attributes = manual_dicationary[self.id]
+        self.x_offset = attributes['x_offset']
+        self.vertical_pointer = attributes['vertical_pointer']
+        self.line_color = attributes['line_color']
 
     def __repr__(self):
         return "<Scaffold Object> with ID: " + self.id
@@ -504,7 +537,7 @@ def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_f
     not_found = list(set(list_of_scaffold_names) - set(list_of_found_scaffolds))
 
     for item in not_found:  # Go through the original list and print out all the scaffold names that weren't found in the fasta file...
-        print item, " Was not found in the sequence file"
+        print(item, " Was not found in the sequence file")
     return dict_of_scaffold_objects
 
 
@@ -527,8 +560,6 @@ scaff_dict = generate_scaffold_objects(list_of_scaffold_names=list_of_scaffolds,
 for key in scaff_dict:
     scaff_dict[key].get_reference_mappings(reference_gff_file)
 
-for key in scaff_dict:
-    print scaff_dict[key].gene_mappings
 
 ## Invert the scaffold objects if the user chose to do so:
 for key in scaff_dict:
@@ -536,23 +567,31 @@ for key in scaff_dict:
         scaff_dict[key].invert_scaffold()
 
 ## PLOTTING
-
 Plotter = OverallPlotter(scaff_dict)
-Plotter.auto_plot()
+
+try: # if there is a manual dictionary, then we will use it to make the plot
+    Plotter.manual_scaffold_plotter(manual_plotting)
+except:
+    Plotter.auto_plot()
 
 ## This is just to create a standard sized output plot
 plt.plot([-1000, -1000], [800, -800], linestyle='-', linewidth=0.0, color='r')
 plt.plot([4500000, 4500000], [800, -800], linestyle='-', linewidth=0.0, color='r')
 
-# Saves the plot
-plt.savefig("scevt_output.pdf", dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
 
 ## Show the plot
 #plt.show()
 
+### Naming our plots uniquely so we don't keep overrwiting the old ones
 cwd = os.getcwd()
+plot_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+output_name = "../Output/saphy_%s.pdf" % plot_time
 
-print "You can find your plot at: %s/scevt_output.pdf" % cwd
 
-print "Have a nice day now and don't forget to take a break every now and then ;)"
-print "Cheers! \n -your SCEVT staff"
+# Saves the plot
+plt.savefig(output_name, dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
+
+print("You can find your plot at: %s/%s" % (cwd, output_name))
+
+print("Have a nice day now and don't forget to take a break every now and then ;)")
+print("Cheers! \n -your SCEVT staff")

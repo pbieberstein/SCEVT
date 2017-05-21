@@ -8,6 +8,11 @@ SCEVT consists of two scripts:
 * scaal.py
 * scaphy.py
 
+Complete the getting started steps to install the dependencies, and then go to the 
+specific Docs to use the tools: 
+* scaal.py 
+* scaphy.py
+
 
 
 
@@ -21,12 +26,11 @@ Eventually, you can expect plots like this:
 ![sample_scaffold_vis](https://github.com/pbieberstein/SCEVT/blob/master/sample_output.png)
 
 
-#### Currently still in development:
+#### Progress:
 Progress:
-* scaff_to_scaff_vis.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
-* gene_vis.py script is currently being worked on ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
-* snp_vis.py has not been started yet ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
-
+* scaal.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
+* scaphy.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
+* Documentation is currently being worked on ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
 
 
 
@@ -50,7 +54,7 @@ This script was developed in Python 2.7
 The easiest way : Install anaconda for python 2.7 on your local machine and then install biopython via:
 
 ```bash
-conda install biopython
+conda install biopython matplotlib pandas
 ```
 
 Alternatively, if you want to stay organized we recommend you install miniconda and then create
@@ -61,7 +65,7 @@ a new virtual environment with the dependencies for this project.
 
 ```bash
 cd path/to/Project/directory
-conda create --prefix ./scevt-env biopython matplotlib
+conda create --prefix ./scevt-env biopython matplotlib pandas
 # This creates a new environment with biopython and matplotlib installed inside the folder "scevt_env"
 ```
 
@@ -70,10 +74,10 @@ Now when you want to run SCEVT, you'll first have to activate this new python en
 source path/to/Project/directory/scevt-env/bin/activate
 ```
 
-Now you're ready to run scaal and scaphy
+Now open up a new terminal window to update the PATHs and now you're ready to run scaal and scaphy
 
 
-Then you can run the tool via
+Then you can run the tools via
 ```bash
 cd path/to/Project/directory/SCEVT
 cd Scripts

@@ -2,6 +2,7 @@ import pandas
 import matplotlib.pyplot as plt
 from Bio import SeqIO
 import os
+from datetime import datetime
 
 '''
 You'll need BioPython and matplotlib installed on your machine to make this script work
@@ -13,7 +14,7 @@ Should simply be:
 
 To run this script, edit the part below this (Parameters) to what you like. Then execute this script by typing:
 
-python scaff_to_scaff_vis.py
+python scaal.py
 
 The output will be saved in the same directory as scevt_output.pdf
 '''
@@ -39,7 +40,9 @@ target_psl_file = "../sampleData/Gene_BLAT_mappings/60444_BNG_plus_notscaff.psl"
 # Parameters for Plotting
 
 N_region_min = 100 # threshold how big NNNN regions have to be in order to plot them
+
 ref_scaff_x_offset = 0 # moving the reference scaffold to the left or  for nicer plots
+
 target_scaff_x_offset = 300000 # moving the target scaffold to the left or right for nicer plots
 
 
@@ -427,15 +430,21 @@ def main():
     # Plots the scaffold and genes
     match.plot_match_scaffolds()
 
-    # Saves the plot
-    plt.savefig("scevt_output.pdf", dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
+
+
 
     cwd = os.getcwd()
+    plot_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    output_name = "../Output/scaal_%s.pdf" % plot_time
+
+
+    # Saves the plot
+    plt.savefig(output_name, dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
 
     # Show the plot
     # plt.show()
 
-    print "You can find your plot at: %s/scevt_output.pdf" % cwd
+    print("You can find your plot at: %s/%s" % (cwd, output_name))
 
     print "Have a nice day now and don't forget to take a break every now and then ;)"
     print "Cheers! \n -your SCEVT staff"
