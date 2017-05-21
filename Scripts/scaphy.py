@@ -7,7 +7,6 @@ from Bio import SeqIO
 from numpy import sign, mean
 import os
 
-
 '''
 This script was written using Python 2.7
 You'll need BioPython and matplotlib installed on your machine to make this script work
@@ -21,48 +20,58 @@ python gene_vis.py
 The output will be saved in the same directory as scevt_output.pdf
 '''
 
-
 #####################################################################################################################
 #########                                      || Parameters ||                                           ###########
 #####################################################################################################################
 
-# Fasta files were the scaffold sequences are included (Can be entire genome files, or just fasta files that contain the scaffold sequence)
+## Fasta files were the scaffold sequences are included (Can be entire genome files, or just fasta files that contain the scaffold sequence)
+# Needed to draw scaffolds with their gaps
 
 reference_fasta_file = "../sampleData/Genome_sequences/TME3_draft.fasta"
 
-
-
-# BLAT output files (.psl) that includes gene mappings onto the genomes which includes the specified scaffolds
+## BLAT output files (.psl) that includes gene mappings onto the genome which includes the specified scaffolds
 # The paths should be relative to where this script is... or absolute paths
 ref_psl_file = "../sampleData/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
-
 
 # Reference genome information file (.gff3) from Phytozome (I deleted the first 3 header rows for simplicity)
 reference_gff_file = "../sampleData/Reference_genome_info/Mesculenta_305_v6.1.gene.gff3"
 
 # Parameters for Plotting
 
-N_region_min = 100 # threshold how big NNNN regions have to be in order to plot them
-ref_scaff_x_offset = 0 # moving the reference scaffold to the left or  for nicer plots
-target_scaff_x_offset = 100000 # moving the target scaffold to the left or right for nicer plots
-
-
+N_region_min = 100  # threshold how big NNNN regions have to be in order to plot them
+ref_scaff_x_offset = 0  # moving the reference scaffold to the left or  for nicer plots
+target_scaff_x_offset = 100000  # moving the target scaffold to the left or right for nicer plots
 
 # TME3 cmd2 scaffold list
-#For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
+# For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
 
-list_of_scaffolds = ['Super-Scaffold_1022', 'Super-Scaffold_44', '000979F', '002893F', 'Super-Scaffold_1206', '006535F', '004561F', 'Super-Scaffold_12475']
-
+list_of_scaffolds = ['Super-Scaffold_1022', 'Super-Scaffold_44', '000979F', '002893F', 'Super-Scaffold_1206', '006535F',
+                     '004561F', 'Super-Scaffold_12475']
 
 # Whether you want to invert the reference or target scaffold:
 # simply list all scaffold names that you want inverted like: ['scaffold1', 'scaffold2', 'scaffold3']
 
 scaffolds_to_invert = ['Super-Scaffold_44']
 
+## Manual Plotting Settings
+# For each scaffold, you need to specifiy a dictionary to declare the x_offset value, vertical_pointer value, the color of the lines
+## colors:
+# b: blue
+# g: green
+# r: red
+# c: cyan
+# m: magenta
+# y: yellow
+# k: black
+# w: white
+manual_plotting = {'Super-Scaffold_1022': {"x_offset":100000, "vertical_pointer": 100, "line_color": 'b'},
+                   'Super-Scaffold_44': {"x_offset":100000, "vertical_pointer": 100, "line_color": 'b'},
+                   '000979F': {"x_offset":100000, "vertical_pointer": 100, "line_color": 'b'}
+                   }
 
 ## Size of Reference Chromosome on Plot:
 # pseudo_length = 31578400 # estimated chromosome 12 length from phytozome Cassava v6.1
-reference_chromosome_length = 11000000 # only part of it so we can see everything better, but if genes lie beyond this region, then make this longer
+reference_chromosome_length = 11000000  # only part of it so we can see everything better, but if genes lie beyond this region, then make this longer
 
 ## What reference chromosome to focus on (this needs be exact same string as is used in the reference annotation file)
 reference_chromosome = 'Chromosome12'
@@ -80,15 +89,14 @@ class OverallPlotter:
     def __init__(self, scaffold_dictionary, reference_vertical_pointer=0):
         self.vertical_pointer = 100
         self.line_color = 'k'
-        self.current_chr_gene_color = 'k'
-        self.remote_gene_color = 'k'
+        self.current_chr_gene_color = 'y'
+        self.remote_gene_color = 'c'
         self.scaffolds = scaffold_dictionary
         # Dictionary looks like: {'scaffold1':scaffold_object, 'scaffold2':scaffold_object}
         # each scaffold object has the gene_mapping dictionary like this:
         # {1: {'scaffold_coordinate': 229627, 'reference_chromosome': 'Chromosome12', 'reference_coordinate': 7495447.0, 'name': 'Manes.12G073900'}, 2:...}}
 
         self.reference_vertical_pointer = reference_vertical_pointer
-
 
     def auto_plot(self):
         '''
@@ -104,13 +112,12 @@ class OverallPlotter:
         self.plot_reference_chromosome()
         self.plot_scaffolds_and_genes()
 
-
-
         return None
 
     def plot_reference_chromosome(self):
         # the reference chromosome will by default sit on y=0 but it can also be manually adjusted
-        plt.plot([0, reference_chromosome_length], [self.reference_vertical_pointer, self.reference_vertical_pointer], color='c', linestyle='-', linewidth=4)
+        plt.plot([0, reference_chromosome_length], [self.reference_vertical_pointer, self.reference_vertical_pointer],
+                 color='c', linestyle='-', linewidth=4)
 
         return None
 
@@ -123,11 +130,10 @@ class OverallPlotter:
         for scaffold in self.scaffolds:
             object = self.scaffolds[scaffold]
             object.plot_scaffold(vertical_pointer=self.vertical_pointer, x_offset=object.x_offset)
-            object.plot_all_genes(vertical_pointer=self.vertical_pointer, x_offset=object.x_offset)
+            object.plot_all_genes(vertical_pointer=self.vertical_pointer, x_offset=object.x_offset, mutual_color=self.current_chr_gene_color , unique_color=self.remote_gene_color, line_color=object.line_color)
             self.vertical_pointer = (abs(self.vertical_pointer) + 50) * (sign(self.vertical_pointer) * -1)
 
         return None
-
 
     def manual_scaffold_plotter(self):
         # here all variables will have to be defined, and then it just draws the scaffolds exactly how we want it to
@@ -145,17 +151,20 @@ class ScaffoldBNG:
 
     Very importantly, it has a method that connects the reference gene location information to the scaffold gene locations...
     '''
+
     def __init__(self, seqIO_record, psl_file, line_color):
-        self.id = seqIO_record.id # Scaffold Name from fasta file
-        self.length = len(seqIO_record.seq) # Scaffold length
+        self.id = seqIO_record.id  # Scaffold Name from fasta file
+        self.length = len(seqIO_record.seq)  # Scaffold length
         self.sequence = seqIO_record.seq
-        self.gaps = self.N_region_finder() # this will be a dictionary with all the gaps! {1:[4,200], 2:[455, 7676]}
+        self.gaps = self.N_region_finder()  # this will be a dictionary with all the gaps! {1:[4,200], 2:[455, 7676]}
         self.record = seqIO_record
-        self.genes = self.get_gene_coordinates(psl_filename = psl_file) # This gets the the gene or SNP mappings (coordinates) and ties them to this scaffold object
+        self.genes = self.get_gene_coordinates(
+            psl_filename=psl_file)  # This gets the the gene or SNP mappings (coordinates) and ties them to this scaffold object
         # self.genes => {'Manes.12G061900.1': [[1404095, 1405697]], 'Manes.12G059000.1': [[2613631, 2614138]]...}
         self.gene_mappings = None
         # {1: {'scaffold_coordinate': 229627, 'reference_chromosome': 'Chromosome12', 'reference_coordinate': 7495447.0, 'name': 'Manes.12G073900'}, 2:...}}
-        self.line_color = line_color # this specifies the line color for the gene matches connectors
+        self.line_color = line_color  # this specifies the line color for the gene matches connectors
+
 
     def N_region_finder(self):
         '''
@@ -201,7 +210,7 @@ class ScaffoldBNG:
             gaps[i] = [N_region_start.pop(0), N_region_end.pop(0)]
         return gaps
 
-    def get_gene_coordinates(self, psl_filename, quality_of_mapping= 0.95):
+    def get_gene_coordinates(self, psl_filename, quality_of_mapping=0.95):
         '''
         The .psl file should look like this:
         matches	misMatches	repMatches	nCount	qNumInsert	qBaseInsert	tNumInsert	tBaseInsert	strand	qName   qSize	qStart	qEnd	tName	tSize	tStart	tEnd	blockCount	blockSizes	qStarts	tStarts
@@ -228,30 +237,30 @@ class ScaffoldBNG:
         # Filtering out genes that don't have at least 90% matching bps of the mRNA
         psl_gene_mappings = psl_gene_mappings[psl_gene_mappings[0] > quality_of_mapping * (psl_gene_mappings[10])]
 
-
         pattern = re.compile('.*.(?=.\d)')  # Pattern matching to gene underlying gene name instead of CDS names...
 
         for index, row in psl_gene_mappings.iterrows():
-                if row[13] == self.id:
-                    coordinate_range = [row[15], row[16]]
-                    gene_name = row[9]
-                    gene_name = re.match(pattern,
-                                         gene_name).group()  # This should erase the CDS specifications at the end of the gene names ".3"
+            if row[13] == self.id:
+                coordinate_range = [row[15], row[16]]
+                gene_name = row[9]
+                gene_name = re.match(pattern,
+                                     gene_name).group()  # This should erase the CDS specifications at the end of the gene names ".3"
 
-                    almost_same = False
-                    if gene_name in gene_dict:
-                        for coordinates in gene_dict[gene_name]: # coordinates will be a list of start & end [start, end]
-                            # gene exists already in the gene dictionary, so we have to check that the match is different enough for us to care.. (not splicing)
-                            if abs(coordinates[0] - coordinate_range[0]) < 300 or abs(coordinates[1] - coordinate_range[1]) < 300:
-                                almost_same = True # probably just difference in splicing, so we can ignore it
-                            else:
-                                None
-                        if almost_same:
+                almost_same = False
+                if gene_name in gene_dict:
+                    for coordinates in gene_dict[gene_name]:  # coordinates will be a list of start & end [start, end]
+                        # gene exists already in the gene dictionary, so we have to check that the match is different enough for us to care.. (not splicing)
+                        if abs(coordinates[0] - coordinate_range[0]) < 300 or abs(
+                                        coordinates[1] - coordinate_range[1]) < 300:
+                            almost_same = True  # probably just difference in splicing, so we can ignore it
+                        else:
                             None
-                        else: # coordinates are not just different splicing, so we add them to the dictionary
-                            gene_dict[gene_name].append(coordinate_range)
-                    else: # we have no coordinates for this gene yet, so we add it freshly
-                        gene_dict[gene_name] = [coordinate_range] # that gene doesn't exist yet, so I add it freshly
+                    if almost_same:
+                        None
+                    else:  # coordinates are not just different splicing, so we add them to the dictionary
+                        gene_dict[gene_name].append(coordinate_range)
+                else:  # we have no coordinates for this gene yet, so we add it freshly
+                    gene_dict[gene_name] = [coordinate_range]  # that gene doesn't exist yet, so I add it freshly
         return gene_dict
 
     def calculate_automatic_offset_and_mapping_stats(self):
@@ -264,32 +273,34 @@ class ScaffoldBNG:
         for match in self.gene_mappings:
             gene_match = self.gene_mappings[match]
             if gene_match['reference_chromosome'] == reference_chromosome:
-                temp_for_avg.append(gene_match['reference_coordinate']) # add all the ref locations to the list
+                temp_for_avg.append(gene_match['reference_coordinate'])  # add all the ref locations to the list
                 num_on_ref_chr += 1
             else:
                 num_elsewhere += 1
-        avg_coordinates = mean(temp_for_avg)
+        avg_coordinates = mean(temp_for_avg)-(self.length/2)
 
         self.x_offset = avg_coordinates
-        self.reference_chromosome_hits = num_on_ref_chr # this is how many genes lie on the specified reference chromosome
-        self.other_chromosome_hits = num_elsewhere # this is how many genes lie on some other chromosome or another contig
+        self.reference_chromosome_hits = num_on_ref_chr  # this is how many genes lie on the specified reference chromosome
+        self.other_chromosome_hits = num_elsewhere  # this is how many genes lie on some other chromosome or another contig
         return None
 
-    def plot_scaffold(self, vertical_pointer=100,x_offset=0):
+    def plot_scaffold(self, vertical_pointer=100, x_offset=0):
         print "Plotting: " + self.id + "..."
         plt.plot([0 + x_offset, self.length + x_offset], [vertical_pointer, vertical_pointer], color='k',
                  linestyle='-', linewidth=4)
         text_location = vertical_pointer + 20
         # drawing the gaps
         for key in self.gaps:
-            gap = self.gaps[key] # returns a list witht the start of the gap and the end of that same gap
+            gap = self.gaps[key]  # returns a list witht the start of the gap and the end of that same gap
             start = gap[0]
             end = gap[1]
-            if abs(end-start) > N_region_min: # checks if gap is big enough for us to care about drawing it
-                offsetter = -12 # silly hack to make the gap drawing fine enough for small gaps... otherwise the giant red blots just overlap way too much
-                for i in range(1,48):
+            if abs(end - start) > N_region_min:  # checks if gap is big enough for us to care about drawing it
+                offsetter = -12  # silly hack to make the gap drawing fine enough for small gaps... otherwise the giant red blots just overlap way too much
+                for i in range(1, 48):
                     offsetter += .5
-                    plt.plot([start+x_offset, end+x_offset], [vertical_pointer + offsetter, vertical_pointer + offsetter], color='r', linestyle='-', linewidth=0.1, alpha=1)
+                    plt.plot([start + x_offset, end + x_offset],
+                             [vertical_pointer + offsetter, vertical_pointer + offsetter], color='r', linestyle='-',
+                             linewidth=0.1, alpha=1)
 
         # Now add the labeling
         # the scaffold name
@@ -297,26 +308,32 @@ class ScaffoldBNG:
 
         text_location = vertical_pointer - 5
         # The gene location stats
-        stats_text = str(self.reference_chromosome_hits)+"/"+str(self.reference_chromosome_hits+self.other_chromosome_hits)+" Genes Mapped Here"
-        plt.text(100000+x_offset+self.length, text_location, stats_text, fontsize=5)
+        stats_text = str(self.reference_chromosome_hits) + "/" + str(
+            self.reference_chromosome_hits + self.other_chromosome_hits) + " Genes Mapped Here"
+        plt.text(100000 + x_offset + self.length, text_location, stats_text, fontsize=5)
 
-    def plot_all_genes(self, vertical_pointer=100, x_offset=0, unique_color='c', mutual_color='g', line_color='g'):
+    def plot_all_genes(self, vertical_pointer=100, x_offset=0, unique_color='c', mutual_color='y', line_color='c'):
         print "Plotting all genes for: ", self.id
         # access all the genes, for each that is on the right chromosome, draw the connection, if not, just draw it with the other color
         for match in self.gene_mappings:
             gene_dictionary = self.gene_mappings[match]
-            ref_chromosome = gene_dictionary['reference_chromosome'] # Accesses that match's chromosome name where the gene is located
-            gene_id = gene_dictionary['name'] # Accesses the gene name
-            scaffold_coordinate = gene_dictionary['scaffold_coordinate'] # gets the coordinate for the scaffold
-            reference_coordinate = gene_dictionary['reference_coordinate'] # gets the coordinate for the reference chromosome
+            ref_chromosome = gene_dictionary[
+                'reference_chromosome']  # Accesses that match's chromosome name where the gene is located
+            gene_id = gene_dictionary['name']  # Accesses the gene name
+            scaffold_coordinate = gene_dictionary['scaffold_coordinate']  # gets the coordinate for the scaffold
+            reference_coordinate = gene_dictionary[
+                'reference_coordinate']  # gets the coordinate for the reference chromosome
             # If the gene is on chromosome 12, draw it on the scaffold, on the reference, and a line between them
             if ref_chromosome == reference_chromosome:
-                plot_thin_marker(scaffold_coordinate + x_offset, vertical_pointer, color=mutual_color)  # draw it in green
+                plot_thin_marker(scaffold_coordinate + x_offset, vertical_pointer,
+                                 color=mutual_color)  # draw it in green
                 plot_thin_marker(reference_coordinate, 0, color=mutual_color)  # draw it in green
-                plt.plot([scaffold_coordinate + x_offset, reference_coordinate], [vertical_pointer, 0], linestyle='-', color=self.line_color,
+                plt.plot([scaffold_coordinate + x_offset, reference_coordinate], [vertical_pointer, 0], linestyle='-',
+                         color=line_color,
                          linewidth=0.1, alpha=0.8)
             else:
-                plot_thin_marker(scaffold_coordinate + x_offset, vertical_pointer, color=unique_color)  # draw it in green
+                plot_thin_marker(scaffold_coordinate + x_offset, vertical_pointer,
+                                 color=unique_color)  # draw it in green
         return None
 
     def invert_scaffold(self):
@@ -324,12 +341,13 @@ class ScaffoldBNG:
         This function aims to invert this scaffold including its NNN regions, and its gene locations
         :return:
         '''
-        half = int(self.length/2)
-        for key in self.gaps: # invert the gap coordinates
-            self.gaps[key] = self.mirror_lists(half, self.gaps[key]) # give it the midpoint of the object and the list of coordinates it should invert on that object
+        half = int(self.length / 2)
+        for key in self.gaps:  # invert the gap coordinates
+            self.gaps[key] = self.mirror_lists(half, self.gaps[
+                key])  # give it the midpoint of the object and the list of coordinates it should invert on that object
 
         new_gene_coordinates = {}
-        for key in self.genes: # {"gene1:[[22,532],[2343,64545]],"gene2:[[2,44]]...}
+        for key in self.genes:  # {"gene1:[[22,532],[2343,64545]],"gene2:[[2,44]]...}
             for instance in self.genes[key]:
                 if key in new_gene_coordinates:
                     new_gene_coordinates[key].append(self.mirror_lists(half, instance))
@@ -339,7 +357,8 @@ class ScaffoldBNG:
 
         for instance in self.gene_mappings:
             match_dictionary = self.gene_mappings[instance]
-            self.gene_mappings[instance]['scaffold_coordinate'] = self.mirror_lists(half, match_dictionary['scaffold_coordinate'])
+            self.gene_mappings[instance]['scaffold_coordinate'] = self.mirror_lists(half, match_dictionary[
+                'scaffold_coordinate'])
 
         print self.id + " was Inverted."
         return self.genes
@@ -365,7 +384,8 @@ class ScaffoldBNG:
 
     def get_reference_mappings(self, reference_gff_file):
         # Pre-filter the phytozome reference genome gff file so that the following operations are faster...
-        filtered_gff = pre_filter_phytozome_gff_file(reference_gff_file) # this is now a pandas object with all the reference genome information
+        filtered_gff = pre_filter_phytozome_gff_file(
+            reference_gff_file)  # this is now a pandas object with all the reference genome information
 
         # For this scaffold object, go through all the genes (.genes attribute) and find the location of them in the reference genome
         # Then we generate a new attribute called .gene_mappings which looks like: {1:{"name":Manes.12G059000.1, "scaffold_coordinate": 23213, "reference_chromosome": 12, "reference_coordinate":12432}, 2:...}
@@ -376,22 +396,27 @@ class ScaffoldBNG:
 
         gene_mappings = {}
 
-        ref_genome_loc = get_gene_locations_from_reference(filtered_gff) # puts all reference genome locations in one big dictionary... hopefully fast to search through :/
+        ref_genome_loc = get_gene_locations_from_reference(
+            filtered_gff)  # puts all reference genome locations in one big dictionary... hopefully fast to search through :/
         match_num = 0
         for gene_name in self.genes:
-            for scaff_instance in self.genes[gene_name]: # Now scaff_instance is a specific coordinate of that gene on the scaffold
-                scaff_instance_coordinate = scaff_instance[0] # Now we extracted only the starting coordinate of that instance (makes it easier later b/c we usually only need starting coordinate)
-                #print "ref_genome: ",ref_genome_loc
-                #print "Gene name:", gene_name
-                for ref_instance in ref_genome_loc[gene_name]: # accesses all instances of that gene on the reference genome
+            for scaff_instance in self.genes[
+                gene_name]:  # Now scaff_instance is a specific coordinate of that gene on the scaffold
+                scaff_instance_coordinate = scaff_instance[
+                    0]  # Now we extracted only the starting coordinate of that instance (makes it easier later b/c we usually only need starting coordinate)
+                # print "ref_genome: ",ref_genome_loc
+                # print "Gene name:", gene_name
+                for ref_instance in ref_genome_loc[
+                    gene_name]:  # accesses all instances of that gene on the reference genome
                     match_num += 1
-                    gene_mappings[match_num] = {"name":gene_name, "reference_chromosome": ref_instance['chromosome'], "reference_coordinate":ref_instance['start_coordinate'], "scaffold_coordinate": scaff_instance_coordinate}
+                    gene_mappings[match_num] = {"name": gene_name, "reference_chromosome": ref_instance['chromosome'],
+                                                "reference_coordinate": ref_instance['start_coordinate'],
+                                                "scaffold_coordinate": scaff_instance_coordinate}
         # {1:{"name":Manes.12G059000.1, "scaffold_coordinate": 23213, "reference_chromosome": 12, "reference_coordinate":12432}, 2:...
 
         self.gene_mappings = gene_mappings
-        self.calculate_automatic_offset_and_mapping_stats() # just calling it at the end of this function because now we have enough information
+        self.calculate_automatic_offset_and_mapping_stats()  # just calling it at the end of this function because now we have enough information
         return None
-
 
     def __repr__(self):
         return "<Scaffold Object> with ID: " + self.id
@@ -409,7 +434,7 @@ def plot_thin_marker(x, y, color):
     offsetter = -12
     for i in range(1, 60):
         offsetter += .4
-        plt.plot([x, x+1000], [y+offsetter, y+offsetter], color=color, linestyle='-', linewidth=0.1, alpha=1)
+        plt.plot([x, x + 1000], [y + offsetter, y + offsetter], color=color, linestyle='-', linewidth=0.1, alpha=1)
     return None
 
 def get_gene_locations_from_reference(gff_pandas_object):
@@ -429,9 +454,11 @@ def get_gene_locations_from_reference(gff_pandas_object):
         gene_name = re.match(pattern, gene_name).group()  # Extracts the gene name from the big string....
         gene_name = gene_name[3:]  # To delete the beginning 'ID=' part
         if gene_name in ref_genome_loc:  # The key is already in there so we need to append the additional coordinates
-            ref_genome_loc[gene_name].append({'chromsome':chr_name, 'start_coordinate': start_coord, 'end_coordinate': end_coord})
+            ref_genome_loc[gene_name].append(
+                {'chromsome': chr_name, 'start_coordinate': start_coord, 'end_coordinate': end_coord})
         else:  # The key doesn't exist yet, so we can initiallize the key and add the first coordinates
-            ref_genome_loc[gene_name] = [{'chromosome':chr_name, 'start_coordinate': start_coord, 'end_coordinate': end_coord}]
+            ref_genome_loc[gene_name] = [
+                {'chromosome': chr_name, 'start_coordinate': start_coord, 'end_coordinate': end_coord}]
 
     return ref_genome_loc
 
@@ -451,8 +478,9 @@ def pre_filter_phytozome_gff_file(gff_file):
     :return: a pandas object that contains the reference gene information
     '''
     # filter the .gff3 file so it includes only rows with gene coordinates (Filter out mRNA, cDNA, and other rows objects)
-    ref_gene_info = pandas.read_csv(gff_file, sep='\t', header=None) # load in the reference gene information file
-    ref_gene_info = ref_gene_info[ref_gene_info[2] == "gene"] # Filter so we only keep rows of gene coordinate information (not cDNA, RNA, etc...)
+    ref_gene_info = pandas.read_csv(gff_file, sep='\t', header=None)  # load in the reference gene information file
+    ref_gene_info = ref_gene_info[ref_gene_info[
+                                      2] == "gene"]  # Filter so we only keep rows of gene coordinate information (not cDNA, RNA, etc...)
     return ref_gene_info
 
 def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_file):
@@ -460,23 +488,24 @@ def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_f
     # {scaffold_1: Object, scaffold2: Object...}
     dict_of_scaffold_objects = {}
     list_of_found_scaffolds = []
-    current_color_index = 0 # to help us cycle through the color map
+    current_color_index = 0  # to help us cycle through the color map
 
     for seq_record in SeqIO.parse(path_to_input_fasta, "fasta"):
         if seq_record.id in list_of_scaffold_names:
-            line_color = colors[current_color_index] # needed to get new colors for the match lines
-            current_color_index += 1 # needed to get new colors for the match lines
-            index = list_of_scaffold_names.index(seq_record.id) # get the index of the scaffold ID in the list
-            name = list_of_scaffold_names[index] # Delete that item from the scaffold list, so at the end we know what we didn't find!
+            line_color = colors[current_color_index]  # needed to get new colors for the match lines
+            current_color_index += 1  # needed to get new colors for the match lines
+            index = list_of_scaffold_names.index(seq_record.id)  # get the index of the scaffold ID in the list
+            name = list_of_scaffold_names[
+                index]  # Delete that item from the scaffold list, so at the end we know what we didn't find!
             list_of_found_scaffolds.append(name)
-            dict_of_scaffold_objects[seq_record.id] = ScaffoldBNG(seq_record, psl_file, line_color) # Add the seq Record to the dictionary
+            dict_of_scaffold_objects[seq_record.id] = ScaffoldBNG(seq_record, psl_file,
+                                                                  line_color)  # Add the seq Record to the dictionary
 
-    not_found = list(set(list_of_scaffold_names)-set(list_of_found_scaffolds))
+    not_found = list(set(list_of_scaffold_names) - set(list_of_found_scaffolds))
 
-    for item in not_found: # Go through the original list and print out all the scaffold names that weren't found in the fasta file...
+    for item in not_found:  # Go through the original list and print out all the scaffold names that weren't found in the fasta file...
         print item, " Was not found in the sequence file"
     return dict_of_scaffold_objects
-
 
 
 #####################################
@@ -484,48 +513,42 @@ def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_f
 #####################################
 
 cm = plt.get_cmap('Paired')
-num_colors = len(list_of_scaffolds) # Decides how many different colors we generate
-# Generate enough RGBA Color tuples to have new line colors for each scaffold
+num_colors = len(list_of_scaffolds)  # Decides how many different colors we generate
+## Generate enough RGBA Color tuples to have new line colors for each scaffold
 colors = []
 for i in range(num_colors):
     colors.append(cm(1.0 * i / num_colors))
 
+scaff_dict = generate_scaffold_objects(list_of_scaffold_names=list_of_scaffolds,
+                                       path_to_input_fasta=reference_fasta_file,
+                                       psl_file=ref_psl_file)
 
-
-scaff_dict = generate_scaffold_objects(list_of_scaffold_names=list_of_scaffolds, path_to_input_fasta=reference_fasta_file,
-                                           psl_file=ref_psl_file)
-
-
-# Get mappings to the reference genome annotations
+## Get mappings to the reference genome annotations
 for key in scaff_dict:
     scaff_dict[key].get_reference_mappings(reference_gff_file)
 
 for key in scaff_dict:
     print scaff_dict[key].gene_mappings
 
-# Invert the scaffold objects if the user chose to do so:
+## Invert the scaffold objects if the user chose to do so:
 for key in scaff_dict:
     if scaff_dict[key].id in scaffolds_to_invert:
         scaff_dict[key].invert_scaffold()
 
-# PLOTTING
+## PLOTTING
 
 Plotter = OverallPlotter(scaff_dict)
 Plotter.auto_plot()
 
-
-
-# This is just to create a standard sized output plot
+## This is just to create a standard sized output plot
 plt.plot([-1000, -1000], [800, -800], linestyle='-', linewidth=0.0, color='r')
 plt.plot([4500000, 4500000], [800, -800], linestyle='-', linewidth=0.0, color='r')
-
-
 
 # Saves the plot
 plt.savefig("scevt_output.pdf", dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
 
-# Show the plot
-plt.show()
+## Show the plot
+#plt.show()
 
 cwd = os.getcwd()
 
@@ -533,4 +556,3 @@ print "You can find your plot at: %s/scevt_output.pdf" % cwd
 
 print "Have a nice day now and don't forget to take a break every now and then ;)"
 print "Cheers! \n -your SCEVT staff"
-
