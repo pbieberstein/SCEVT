@@ -51,11 +51,11 @@ target_scaff_x_offset = 300000 # moving the target scaffold to the left or right
 
 ref_scaffold = 'Super-Scaffold_111'
 
-target_scaffold = "Super-Scaffold_29"
+target_scaffold = "Super-Scaffold_111"
 
 # Whether you want to invert the reference or target scaffold:
 
-invert_reference = True
+invert_reference = False
 
 invert_target = False
 
@@ -382,8 +382,10 @@ def generate_scaffold_object(scaffold_name, path_to_input_fasta, psl_file):
     # Generates one specific scaffold object by scanning through the fasta file, finding the scaffold ID, and creating a scaffold object from that
     for seq_record in SeqIO.parse(path_to_input_fasta, "fasta"):
         if seq_record.id == scaffold_name:
+            print(seq_record.id, " Found")
             scaffold_object = ScaffoldBNG(seq_record, psl_file)
-    return scaffold_object
+            return scaffold_object
+    print(seq_record.id, " Could not be found in the fasta file -> ERROR")
 
 
 def plot_thin_marker(x, y, color):

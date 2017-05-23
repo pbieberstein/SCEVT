@@ -56,7 +56,7 @@ conda create --prefix ./scevt-env biopython matplotlib pandas
 
 Now when you want to run SCEVT, you'll first have to activate this new python environment via:
 ```bash
-source path/to/Project/directory/scevt-env/bin/activate
+source activate scevt-env/bin/activate
 ```
 
 Now open up a new terminal window to update the PATHs and now you're ready to run scaal and scaphy
