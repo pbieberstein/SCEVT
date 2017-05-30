@@ -28,9 +28,9 @@ rphilipp@ethz.student.ch
 
 # Fasta files were the scaffold sequences are included (Can be entire genome files, or just fasta files that contain the scaffold sequence)
 
-reference_fasta_file = "../Data/Genome_sequences/60444_07april_cmd2_region.fasta"
+reference_fasta_file = "../Data/Genome_sequences/60444_draft.fasta"
 
-target_fasta_file = "../Data/Genome_sequences/60444_07april_cmd2_region.fasta"
+target_fasta_file = "../Data/Genome_sequences/TME3_draft.fasta"
 
 
 # BLAT output files (.psl) that includes gene mappings onto the genomes which includes the specified scaffolds
@@ -53,7 +53,7 @@ target_scaff_x_offset = 300000 # moving the target scaffold to the left or right
 
 ref_scaffold = 'Super-Scaffold_183'
 
-target_scaffold = "Super-Scaffold_111"
+target_scaffold = "Super-Scaffold_147"
 
 # Whether you want to invert the reference or target scaffold:
 
@@ -386,6 +386,7 @@ def generate_scaffold_object(scaffold_name, path_to_input_fasta, psl_file):
         if seq_record.id == scaffold_name:
             print(seq_record.id, " Found")
             scaffold_object = ScaffoldBNG(seq_record, psl_file)
+            print("Length: ", scaffold_object.length)
             return scaffold_object
     print(scaffold_name, " Could not be found in the fasta file -> ERROR")
     print('Try with a different Scaffold, or make sure you gave me the right FASTA file')

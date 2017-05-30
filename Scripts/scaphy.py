@@ -48,19 +48,7 @@ N_region_min = 100  # threshold how big NNNN regions have to be in order to plot
 # TME3 cmd2 scaffold list
 # For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
 
-#list_of_scaffolds = ['Super-Scaffold_1022', 'Super-Scaffold_44', '000979F', '002893F', 'Super-Scaffold_1206', '006535F', '004561F', 'Super-Scaffold_12475']
-
-# 1st haplotype of tme3
-list_of_scaffolds = ['Super-Scaffold_594', '003151F', '004288F', '004519F', '006625F', '001880F.2', '004561F', '006535F', 'Super-Scaffold_1022', '000979F', '002893F', 'Super-Scaffold_44', 'Super-Scaffold_1206', 'Super-Scaffold_12475', '002656F', '001354F', '005328F', '003188F', '006661F', '005270F', '004057F', '004799F']
-
-# Stricter haplotye 1
-list_of_scaffolds = ['006625F', '001880F.2', '004561F', '006535F', 'Super-Scaffold_1022', '000979F', '002893F', 'Super-Scaffold_44', 'Super-Scaffold_1206', 'Super-Scaffold_12475', '002656F', '001354F', '005328F', '003188F']
-
-# 2nd haplotype of tme3
-#list_of_scaffolds = ['003638F', '003277F', '002250F', '004249F', '001090F', '005200F', '002924F', '005835F', '004991F', 'Super-Scaffold_40', '004315F', '000866F.1', '003311F', '005083F', 'Super-Scaffold_1951', '005011F', '001839F', '003097F', 'Super-Scaffold_730', '004341F', '003762F', '003099F', '002883F', '003380F', '006280F', '000619F.2', '003025F']
-
-# 2nd haplotype of tme3 stricter
-list_of_scaffolds = ['Super-Scaffold_1951', '005011F', '001839F', '003097F', 'Super-Scaffold_730', '004341F', '003762F', '003099F']
+list_of_scaffolds = ['Super-Scaffold_1022', 'Super-Scaffold_44', '000979F', '002893F', 'Super-Scaffold_1206', '006535F', '004561F', 'Super-Scaffold_12475']
 
 # Whether you want to invert the reference or target scaffold:
 # simply list all scaffold names that you want inverted like: ['scaffold1', 'scaffold2', 'scaffold3']
