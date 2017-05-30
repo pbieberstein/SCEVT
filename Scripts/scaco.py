@@ -49,7 +49,7 @@ target_scaff_x_offset = 300000 # moving the target scaffold to the left or right
 # TME3 cmd2 scaffold list
 #For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
 
-ref_scaffold = 'Super-Scaffold_111'
+ref_scaffold = 'Super-Scaffold_183'
 
 target_scaffold = "Super-Scaffold_111"
 
@@ -385,8 +385,9 @@ def generate_scaffold_object(scaffold_name, path_to_input_fasta, psl_file):
             print(seq_record.id, " Found")
             scaffold_object = ScaffoldBNG(seq_record, psl_file)
             return scaffold_object
-    print(seq_record.id, " Could not be found in the fasta file -> ERROR")
-
+    print(scaffold_name, " Could not be found in the fasta file -> ERROR")
+    print('Try with a different Scaffold, or make sure you gave me the right FASTA file')
+    raise SystemExit(0)
 
 def plot_thin_marker(x, y, color):
     # This function draws very thin vertical lines by doing it with horizontal lines because vertical bars are too fat!
