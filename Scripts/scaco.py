@@ -6,17 +6,19 @@ from datetime import datetime
 
 '''
 You'll need BioPython and matplotlib installed on your machine to make this script work
-Should simply be:
-
-
-(http://biopython.org/wiki/Download)
-
+I recommend you get it via miniconda or anaconda.
 
 To run this script, edit the part below this (Parameters) to what you like. Then execute this script by typing:
 
-python scaal.py
+python scaco.py
 
-The output will be saved in the same directory as scevt_output.pdf
+The output will be saved in the same directory as <timestamp>_scaco_output.pdf
+
+Written by:
+Philipp v. Bieberstein
+rphilipp@ethz.student.ch
+
+
 '''
 
 

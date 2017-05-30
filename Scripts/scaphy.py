@@ -16,7 +16,12 @@ To run this script, edit the part below this (Parameters) to what you like. Then
 
 python scaphy.py
 
-The output will be saved in the same directory as scevt_output.pdf
+The output will be saved in the same directory as <timestamp>_scaphy_output.pdf
+
+Written by:
+Philipp v. Bieberstein
+rphilipp@ethz.student.ch
+
 '''
 
 #####################################################################################################################
