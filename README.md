@@ -39,7 +39,7 @@ This script was developed in Python 2.7
 The easiest way : Install anaconda for python 2.7 on your local machine and then install biopython via:
 
 ```bash
-conda install biopython matplotlib pandas
+conda install biopython matplotlib==1.5.3 pandas
 ```
 
 Alternatively, if you want to stay organized we recommend you install miniconda and then create
@@ -50,9 +50,11 @@ a new virtual environment with the dependencies for this project.
 
 ```bash
 cd path/to/Project/directory
-conda create --prefix ./scevt-env biopython matplotlib pandas
+conda create --prefix ./scevt-env biopython matplotlib==1.5.3 pandas
 # This creates a new environment with biopython and matplotlib installed inside the folder "scevt_env"
 ```
+
+**It's important to use matplotlib 1.5.3 otherwise SCEVT will run very slowly
 
 Now when you want to run SCEVT, you'll first have to activate this new python environment via:
 ```bash
