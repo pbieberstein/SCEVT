@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from Bio import SeqIO
 import os
 from datetime import datetime
+import sys
 
 '''
 You'll need BioPython and matplotlib installed on your machine to make this script work
@@ -20,7 +21,6 @@ rphilipp@ethz.student.ch
 
 
 '''
-
 
 #####################################################################################################################
 #########                                      || Parameters ||                                           ###########
@@ -51,9 +51,9 @@ target_scaff_x_offset = 300000 # moving the target scaffold to the left or right
 # TME3 cmd2 scaffold list
 #For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
 
-ref_scaffold = 'Super-Scaffold_183'
+ref_scaffold = '004409F'
 
-target_scaffold = "Super-Scaffold_147"
+target_scaffold = "Super-Scaffold_1022"
 
 # Whether you want to invert the reference or target scaffold:
 
@@ -143,7 +143,7 @@ class MatchObject:
         text_location = vertical_pointer + 40
         # drawing the gaps
         for key in scaffold_object.gaps:
-            gap = scaffold_object.gaps[key] # returns a list witht the start of the gap and the end of that same gap
+            gap = scaffold_object.gaps[key] # returns a list with the start of the gap and the end of that same gap
             start = gap[0]
             end = gap[1]
             if abs(end-start) > N_region_min: # checks if gap is big enough for us to care about drawing it
@@ -410,53 +410,52 @@ def plot_thin_marker(x, y, color):
 #####################################
 ## Running the script
 #####################################
-
-def main():
-    ref_scaff = generate_scaffold_object(scaffold_name=ref_scaffold, path_to_input_fasta=reference_fasta_file,
-                                         psl_file=ref_psl_file)
-
-    target_scaff = generate_scaffold_object(scaffold_name=target_scaffold, path_to_input_fasta=target_fasta_file,
-                                            psl_file=target_psl_file)
+print(sys.version)
 
 
-    # Invert the scaffold object if the user chose to do so:
-    if invert_reference:
-        ref_scaff.invert_scaffold()
-    if invert_target:
-        target_scaff.invert_scaffold()
+ref_scaff = generate_scaffold_object(scaffold_name=ref_scaffold, path_to_input_fasta=reference_fasta_file,
+                                     psl_file=ref_psl_file)
 
-    # create a match instance
-    match = MatchObject(ref_scaff, target_scaff)
-
-    # PLOTTING
-
-    # This is just to create a standard sized output plot
-    plt.plot([-1000, -1000], [800, -800], linestyle='-', linewidth=0.0, color='r')
-    plt.plot([4500000, 4500000], [800, -800], linestyle='-', linewidth=0.0, color='r')
-
-    # Plots the scaffold and genes
-    match.plot_match_scaffolds()
+target_scaff = generate_scaffold_object(scaffold_name=target_scaffold, path_to_input_fasta=target_fasta_file,
+                                        psl_file=target_psl_file)
 
 
+# Invert the scaffold object if the user chose to do so:
+if invert_reference:
+    ref_scaff.invert_scaffold()
+if invert_target:
+    target_scaff.invert_scaffold()
 
+# create a match instance
+match = MatchObject(ref_scaff, target_scaff)
 
-    cwd = os.getcwd()
-    plot_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    output_name = "../Output/scaco_%s.pdf" % plot_time
+# PLOTTING
 
+# This is just to create a standard sized output plot
+plt.plot([-1000, -1000], [800, -800], linestyle='-', linewidth=0.0, color='r')
+plt.plot([4500000, 4500000], [800, -800], linestyle='-', linewidth=0.0, color='r')
 
-    # Saves the plot
-    plt.savefig(output_name, dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
-
-    # Show the plot
-    # plt.show()
-
-    print("You can find your plot at: %s/%s" % (cwd, output_name))
-
-    print "Have a nice day now and don't forget to take a break every now and then ;)"
-    print "Cheers! \n -your SCEVT staff"
+# Plots the scaffold and genes
+match.plot_match_scaffolds()
 
 
 
-if __name__ == '__main__':
-    main()
+
+cwd = os.getcwd()
+plot_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+output_name = "../Output/scaco_%s.pdf" % plot_time
+
+
+# Saves the plot
+plt.savefig(output_name, dpi=300, figsize=(400, 100))  # Switch between tme3 or 60444
+
+# Show the plot
+# plt.show()
+
+print("You can find your plot at: %s/%s" % (cwd, output_name))
+
+print "Have a nice day now and don't forget to take a break every now and then ;)"
+print "Cheers! \n -your SCEVT staff"
+
+
+
