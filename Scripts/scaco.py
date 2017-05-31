@@ -37,7 +37,7 @@ target_fasta_file = "../Data/Genome_sequences/TME3_draft.fasta"
 # The paths should be relative to where this script is... or absolute paths
 ref_psl_file = "../Data/Gene_BLAT_mappings/60444_BNG_plus_notscaff.psl"
 
-target_psl_file = "../Data/Gene_BLAT_mappings/60444_BNG_plus_notscaff.psl"
+target_psl_file = "../Data/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
 
 # Parameters for Plotting
 
@@ -59,7 +59,7 @@ target_scaffold = "Super-Scaffold_147"
 
 invert_reference = False
 
-invert_target = False
+invert_target = True
 
 #####################################################################################################################
 #########                                   || End of Parameters ||                                       ###########
@@ -137,6 +137,7 @@ class MatchObject:
 
 
     def plot_scaffold(self, vertical_pointer=100,x_offset=0, scaffold_object=None):
+        print("Plotting Scaffold: ", scaffold_object.id)
         plt.plot([0 + x_offset, scaffold_object.length + x_offset], [vertical_pointer, vertical_pointer], color='k',
                  linestyle='-', linewidth=4)
         text_location = vertical_pointer + 40
@@ -171,7 +172,7 @@ class MatchObject:
     def plot_unique_genes(self, ref_vertical_pointer, target_vertical_pointer=0, ref_scaff_x_offset=0, target_scaff_x_offset=0):
         # mutual_gene_connectors = {}  # Looks like this: {1:{ref_coord:232, target_coord:5342, name:"masd222"}, 2:...}
         # unique_ref = {} # Looks like this: {23:{"name": ref_gene, "ref_coord": ref_instance[0]}, 44:{"name": ref_gene, "ref_coord": ref_instance[0]}}
-
+        print("Plotting unique genes on Scaffolds")
         # First, draw unique genes on reference scaffold
         x_offset = ref_scaff_x_offset
         vertical_pointer = ref_vertical_pointer
@@ -191,7 +192,7 @@ class MatchObject:
 
     def plot_mutual_genes(self, ref_vertical_pointer, target_vertical_pointer, ref_scaff_x_offset=0, target_scaff_x_offset=0):
         # mutual_gene_connectors = {}  # Looks like this: {1:{ref_coordinate:232, target_coordinate:5342, name:"masd222"}, 2:...}
-
+        print("Plotting Mutual Gene connections...")
         # get the coordinates for each match
         for key in self.mutual_genes:
             ref_coord = self.mutual_genes[key]["ref_coordinate"]
