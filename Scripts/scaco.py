@@ -4,6 +4,7 @@ from Bio import SeqIO
 import os
 from datetime import datetime
 import sys
+import pip
 
 '''
 You'll need BioPython and matplotlib installed on your machine to make this script work
@@ -410,8 +411,16 @@ def plot_thin_marker(x, y, color):
 #####################################
 ## Running the script
 #####################################
-print(sys.version)
 
+## Getting system info for debugging purposes
+print(sys.version)
+installed_packages = pip.get_installed_distributions()
+installed_packages_list = sorted(["%s==%s" % (i.key, i.version)
+     for i in installed_packages])
+print("You have these packages installed:")
+print(installed_packages_list)
+
+## end of debugging mode
 
 ref_scaff = generate_scaffold_object(scaffold_name=ref_scaffold, path_to_input_fasta=reference_fasta_file,
                                      psl_file=ref_psl_file)
