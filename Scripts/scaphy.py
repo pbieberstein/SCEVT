@@ -6,6 +6,7 @@ from Bio import SeqIO
 from numpy import sign, mean
 import os
 from datetime import datetime
+
 '''
 This script was written using Python 2.7
 You'll need BioPython and matplotlib installed on your machine to make this script work
@@ -31,11 +32,11 @@ rphilipp@ethz.student.ch
 ## Fasta files were the scaffold sequences are included (Can be entire genome files, or just fasta files that contain the scaffold sequence)
 # Needed to draw scaffolds with their gaps
 
-reference_fasta_file = "../Data/Genome_sequences/TME3_draft.fasta"
+reference_fasta_file = "../Data/Genome_sequences/60444_draft.fasta"
 
 ## BLAT output files (.psl) that includes gene mappings onto the genome which includes the specified scaffolds
 # The paths should be relative to where this script is... or absolute paths
-ref_psl_file = "../Data/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
+ref_psl_file = "../Data/Gene_BLAT_mappings/60444_BNG_plus_notscaff.psl"
 
 # Reference genome information file (.gff3) from Phytozome (I deleted the first 3 header rows for simplicity)
 reference_gff_file = "../Data/Reference_genome_info/Mesculenta_305_v6.1.gene.gff3"
@@ -45,15 +46,15 @@ reference_gff_file = "../Data/Reference_genome_info/Mesculenta_305_v6.1.gene.gff
 N_region_min = 100  # threshold how big NNNN regions have to be in order to plot them
 
 
-# TME3 cmd2 scaffold list
-# For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
+# List of scaffolds to draw
+# For example: list_of_scaffolds = ['Super-Scaffold_1951' or 'Super-Scaffold_730']
 
-list_of_scaffolds = ['Super-Scaffold_1022', 'Super-Scaffold_44', '000979F', '002893F', 'Super-Scaffold_1206', '006535F', '004561F', 'Super-Scaffold_12475']
+list_of_scaffolds = ['Super-Scaffold_54','007694F','000110F','Super-Scaffold_29']
 
 # Whether you want to invert the reference or target scaffold:
 # simply list all scaffold names that you want inverted like: ['scaffold1', 'scaffold2', 'scaffold3']
 
-scaffolds_to_invert = ['Super-Scaffold_44']
+scaffolds_to_invert = []
 
 ## Manual Plotting Settings
 # For each scaffold, you need to specifiy a dictionary to declare the x_offset value, vertical_pointer value, the color of the lines
@@ -267,7 +268,7 @@ class ScaffoldBNG:
         # Filtering out genes that don't have at least 90% matching bps of the mRNA
         psl_gene_mappings = psl_gene_mappings[psl_gene_mappings[0] > quality_of_mapping * (psl_gene_mappings[10])]
 
-        pattern = re.compile('.*.(?=.\d)')  # Pattern matching to gene underlying gene name instead of CDS names...
+        pattern = re.compile('.*(?=\.)')  # Pattern matching to gene underlying gene name instead of CDS names...
 
         for index, row in psl_gene_mappings.iterrows():
             if row[13] == self.id:
