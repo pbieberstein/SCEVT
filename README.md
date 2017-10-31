@@ -40,6 +40,7 @@ The easiest way : Install anaconda for python 2.7 on your local machine and then
 
 ```bash
 conda install biopython matplotlib==1.5.3 pandas
+conda install --channel bioconda gffutils
 ```
 
 Alternatively, if you want to stay organized we recommend you install miniconda and then create
