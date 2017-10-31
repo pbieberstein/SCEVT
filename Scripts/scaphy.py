@@ -6,6 +6,7 @@ from Bio import SeqIO
 from numpy import sign, mean
 import os
 from datetime import datetime
+import gffutils
 
 '''
 This script was written using Python 2.7
@@ -36,10 +37,10 @@ reference_fasta_file = "../Data/Genome_sequences/60444_draft.fasta"
 
 ## BLAT output files (.psl) that includes gene mappings onto the genome which includes the specified scaffolds
 # The paths should be relative to where this script is... or absolute paths
-ref_psl_file = "../Data/Gene_BLAT_mappings/60444_BNG_plus_notscaff.psl"
+ref_psl_file = "../Data/Gene_BLAT_mappings/60444_draft.fasta_BNG_cDNAs.psl"
 
 # Reference genome information file (.gff3) from Phytozome (I deleted the first 3 header rows for simplicity)
-reference_gff_file = "../Data/Reference_genome_info/Mesculenta_305_v6.1.gene.gff3"
+reference_gff_file = "../Data/Reference_genome_info/OriginalMesculenta_305_v6.1.gene.gff3"
 
 # Parameters for Plotting
 
@@ -49,7 +50,7 @@ N_region_min = 100  # threshold how big NNNN regions have to be in order to plot
 # List of scaffolds to draw
 # For example: list_of_scaffolds = ['Super-Scaffold_1951' or 'Super-Scaffold_730']
 
-list_of_scaffolds = ['Super-Scaffold_54','007694F','000110F','Super-Scaffold_29']
+list_of_scaffolds = ['007694F','000110F','Super-Scaffold_29']
 
 # Whether you want to invert the reference or target scaffold:
 # simply list all scaffold names that you want inverted like: ['scaffold1', 'scaffold2', 'scaffold3']
@@ -348,7 +349,7 @@ class ScaffoldBNG:
         plt.text(100000 + x_offset + self.length, text_location, stats_text, fontsize=5)
 
     def plot_all_genes(self, vertical_pointer=100, x_offset=0, unique_color='c', mutual_color='y', line_color='c'):
-        print("Plotting all genes for: ", self.id)
+        print("\t"+"Plotting all genes for: "+ str(self.id))
         # access all the genes, for each that is on the right chromosome, draw the connection, if not, just draw it with the other color
         for match in self.gene_mappings:
             gene_dictionary = self.gene_mappings[match]
@@ -418,9 +419,10 @@ class ScaffoldBNG:
         return list_to_invert
 
     def get_reference_mappings(self, reference_gff_file):
+
         # Pre-filter the phytozome reference genome gff file so that the following operations are faster...
-        filtered_gff = pre_filter_phytozome_gff_file(
-            reference_gff_file)  # this is now a pandas object with all the reference genome information
+        #filtered_gff = pre_filter_phytozome_gff_file(reference_gff_file)  # this is now a pandas object with all the reference genome information
+        # ^^ Not necessary anymore because we use the official gff parser...
 
         # For this scaffold object, go through all the genes (.genes attribute) and find the location of them in the reference genome
         # Then we generate a new attribute called .gene_mappings which looks like: {1:{"name":Manes.12G059000.1, "scaffold_coordinate": 23213, "reference_chromosome": 12, "reference_coordinate":12432}, 2:...}
@@ -431,18 +433,15 @@ class ScaffoldBNG:
 
         gene_mappings = {}
 
-        ref_genome_loc = get_gene_locations_from_reference(
-            filtered_gff)  # puts all reference genome locations in one big dictionary... hopefully fast to search through :/
+        ref_genome_loc = get_gene_locations_from_gff_db(reference_gff_file)  # puts all reference genome locations in one big dictionary... hopefully fast to search through :/
         match_num = 0
         for gene_name in self.genes:
             for scaff_instance in self.genes[
                 gene_name]:  # Now scaff_instance is a specific coordinate of that gene on the scaffold
-                scaff_instance_coordinate = scaff_instance[
-                    0]  # Now we extracted only the starting coordinate of that instance (makes it easier later b/c we usually only need starting coordinate)
+                scaff_instance_coordinate = scaff_instance[0]  # Now we extracted only the starting coordinate of that instance (makes it easier later b/c we usually only need starting coordinate)
                 # print "ref_genome: ",ref_genome_loc
                 # print "Gene name:", gene_name
-                for ref_instance in ref_genome_loc[
-                    gene_name]:  # accesses all instances of that gene on the reference genome
+                for ref_instance in ref_genome_loc[gene_name]:  # accesses all instances of that gene on the reference genome
                     match_num += 1
                     gene_mappings[match_num] = {"name": gene_name, "reference_chromosome": ref_instance['chromosome'],
                                                 "reference_coordinate": ref_instance['start_coordinate'],
@@ -482,51 +481,59 @@ def plot_thin_marker(x, y, color):
         plt.plot([x, x + 1000], [y + offsetter, y + offsetter], color=color, linestyle='-', linewidth=0.1, alpha=1)
     return None
 
-def get_gene_locations_from_reference(gff_pandas_object):
+def create_gff_database(gff_file):
+    '''
+    Creates the sqlite database for the gff file so that parsing becomes faster.
+
+    It will first check if we've seen that GFF file before by looking if there already exists a sqlite database for it.
+    Because sqlite database will have the name of the last modification date from the original gff file. If it matches the current
+    gff file, then we can skip the database creation step (takes long)
+    '''
+    # Check 'last-modification-date' from gff file
+    time = os.path.getctime(gff_file)
+    # create sqlite db name
+    db_name = 'temp_db_'+str(int(time))
+    # only create database if the database for that gff file doesn't exist yet (Because this can take a while)
+    try:
+        print("Creating database for the gff file...")
+        db = gffutils.create_db(gff_file, db_name)
+    except:
+        print("Ohh nevermind! I've seen this gff file before! Skipping this step")
+        None
+    return None
+
+def get_gene_locations_from_gff_db(gff_file):
+    '''
+    This function generates a ref_genome_loc dictionary which contains the coordinates for each gene in the reference genome
+    {"Manes.12G059000.1":[{'chromsome':chr12, 'start_coordinate': 12, 'end_coordinate': 421}, {'chromsome':chr11, 'start_coordinate': 1231, 'end_coordinate': 5331}], ...}
+    :param gff_file:
+    :return:
+    '''
     # This function generates a ref_genome_loc dictionary which contains the coordinates for each gene in the reference genome
     # {"Manes.12G059000.1":[{'chromsome':chr12, 'start_coordinate': 12, 'end_coordinate': 421}, {'chromsome':chr11, 'start_coordinate': 1231, 'end_coordinate': 5331}], ...}
     # NOTE - dictionary in list in dictionary...
     ref_genome_loc = {}
-    pattern = re.compile('ID.*.(?=.v6.1;)')  # for pattern matching in regular expressions when extracting gene_id
 
-    for index, row in gff_pandas_object.iterrows():
-        chr_name = row[0]
-        start_coord = float(row[3])
-        end_coord = float(row[4])
-        gene_name = row[8]
-        # orignally looks like this 'ID=Manes.01G000600.v6.1;Name=Manes.01G000600;ancestorIdentifier=cassava4.1_022534m.g.v4.1'
-        # So I need to extract just the gene ID which comes right before ".v6.1;"...
-        gene_name = re.match(pattern, gene_name).group()  # Extracts the gene name from the big string....
-        gene_name = gene_name[3:]  # To delete the beginning 'ID=' part
+    # Check 'last-modification-date' from gff file
+    time = os.path.getctime(gff_file)
+    # create sqlite db name
+    db_name = 'temp_db_'+str(int(time))
+    db = gffutils.FeatureDB(db_name)
+
+    for gene_object in db.features_of_type('gene'):
+        # This extracts the releant information from the gff database... the last one is a bit sloppy but works for the cassava gff file
+        # For other genomes, the gene name might be written more explicitely and not hidden in the additional attributes...
+        chr_name, start_coord, end_coord, gene_name = (gene_object.chrom, float(gene_object.start), float(gene_object.stop), gene_object.attributes["Name"][0])
+
+        #print(name.seqid, name.start, name.stop, name.id, name.attributes["Name"][0])
+
         if gene_name in ref_genome_loc:  # The key is already in there so we need to append the additional coordinates
             ref_genome_loc[gene_name].append(
                 {'chromsome': chr_name, 'start_coordinate': start_coord, 'end_coordinate': end_coord})
         else:  # The key doesn't exist yet, so we can initiallize the key and add the first coordinates
             ref_genome_loc[gene_name] = [
                 {'chromosome': chr_name, 'start_coordinate': start_coord, 'end_coordinate': end_coord}]
-
     return ref_genome_loc
-
-def pre_filter_phytozome_gff_file(gff_file):
-    '''
-    This function pre-processes our initially large reference genome file Because we only want gene information from the reference file, not cDNA, mRNA, etc.
-
-    Then the ref_gene_information file is the Cassava Reference Genome v6.1 file from Phytozome (Mesculenta_305_v6.1.gene.gff3
-    With the following columns:
-    Start coordinate in reference genome column: 3
-    End coordinate in reference genome column: 4
-    Gene_ID (includes other junk) column: 8
-    ** We only care about rows that have "gene" in column 2, otherwise it also includes mRNA, CDS, etc. information - we only need gene coordinates
-
-
-    :param ref_genome_gff_file: downloaded from phytozome (tested with Cassava v6.1)
-    :return: a pandas object that contains the reference gene information
-    '''
-    # filter the .gff3 file so it includes only rows with gene coordinates (Filter out mRNA, cDNA, and other rows objects)
-    ref_gene_info = pandas.read_csv(gff_file, sep='\t', header=None)  # load in the reference gene information file
-    ref_gene_info = ref_gene_info[ref_gene_info[
-                                      2] == "gene"]  # Filter so we only keep rows of gene coordinate information (not cDNA, RNA, etc...)
-    return ref_gene_info
 
 def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_file):
     # Generates a dictionary with multiple scaffold objects as specified.
@@ -557,6 +564,9 @@ def generate_scaffold_objects(list_of_scaffold_names, path_to_input_fasta, psl_f
 ## Running the script
 #####################################
 
+# Create sqlite database for this gff file... needed for fast gff parsing
+create_gff_database(reference_gff_file)
+
 cm = plt.get_cmap('Paired')
 num_colors = len(list_of_scaffolds)  # Decides how many different colors we generate
 ## Generate enough RGBA Color tuples to have new line colors for each scaffold
@@ -570,6 +580,7 @@ scaff_dict = generate_scaffold_objects(list_of_scaffold_names=list_of_scaffolds,
 
 ## Get mappings to the reference genome annotations
 for key in scaff_dict:
+    print("Findings Gene Mappings for: "+ str(key))
     scaff_dict[key].get_reference_mappings(reference_gff_file)
 
 
