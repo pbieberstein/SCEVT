@@ -18,8 +18,7 @@ SCEVT consists of two scripts:
 #### Progress:
 * scaal.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
 * scaphy.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
-* Documentation is currently being worked on ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
-
+* Documentation is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
 
 
 
