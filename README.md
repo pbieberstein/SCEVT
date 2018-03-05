@@ -26,6 +26,8 @@ scaco directly compares two scaffolds based on gene annotations. It highlights a
 
 Here is an example output:
 ![example scaco output](https://github.com/pbieberstein/SCEVT/blob/master/documentation/scaal_example_output.png)
+
+
 [How to use](https://github.com/pbieberstein/SCEVT/wiki/scaco.py-User-Guide)
 
 
