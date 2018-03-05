@@ -8,7 +8,6 @@ SCEVT consists of two scripts:
 * scaal.py
 * scaphy.py
 
-# Overview
 
 **scaphy.py** (Scaffold to Physical Reference Mapping)
 -- 
@@ -30,15 +29,9 @@ Here is an example output:
 [How to use](https://github.com/pbieberstein/SCEVT/wiki/scaco.py-User-Guide)
 
 
-#### Progress:
-* scaal.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
-* scaphy.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
-* Documentation is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
 
-
-
-
-#### Getting Started
+**Installation**
+--
 **Getting the Files**
 ```bash
 # Go to where you want to have this tool
@@ -87,3 +80,11 @@ python scaal.py
 # or
 python scaphy.py
 ```
+
+
+
+**Progress:**
+--
+* scaal.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
+* scaphy.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
+* Documentation is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
