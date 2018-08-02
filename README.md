@@ -8,23 +8,32 @@ SCEVT consists of two scripts:
 * scaal.py
 * scaphy.py
 
-[Whats the difference?](https://github.com/pbieberstein/SCEVT/wiki/Overview) 
+
+**scaphy.py** (Scaffold to Physical Reference Mapping)
+-- 
+scaphy is a tool to visualize scaffolds in relation to a reference genome assembly. Specifically, it draws gaps within the scaffolds (esspecially helpful for BioNano assisted scaffolds) and draws mappings to a reference chromosome whenever the genes match. It also highlights when a gene is on the scaffold that is not on the specified chromosome on the reference genome (meaning you have probably anchored a new contig).
+
+Here is an example output:
+![example scaphy output](https://github.com/pbieberstein/SCEVT/blob/master/documentation/scaphy_example_output.png)
+
+[How to use](https://github.com/pbieberstein/SCEVT/wiki/scaphy.py-User-Guide)
+
+
+**scaco.py** (Scaffold Comparison) 
+--
+[How it Works]
+scaco directly compares two scaffolds based on gene annotations. It highlights and maps which genes are similar on the two scaffolds, and also highlights which genes are present on one but not the other. Additionally, it also plots the gaps within the scaffolds.
+
+Here is an example output:
+![example scaco output](https://github.com/pbieberstein/SCEVT/blob/master/documentation/scaal_example_output.png)
+
+
+[How to use](https://github.com/pbieberstein/SCEVT/wiki/scaco.py-User-Guide)
 
 
 
-
-
-
-#### Progress:
-* scaal.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
-* scaphy.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
-* Documentation is currently being worked on ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
-
-
-
-
-
-#### Getting Started
+**Installation**
+--
 **Getting the Files**
 ```bash
 # Go to where you want to have this tool
@@ -73,3 +82,11 @@ python scaal.py
 # or
 python scaphy.py
 ```
+
+
+
+**Progress:**
+--
+* scaal.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
+* scaphy.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
+* Documentation is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
