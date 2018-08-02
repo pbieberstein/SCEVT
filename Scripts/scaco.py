@@ -29,16 +29,16 @@ rphilipp@ethz.student.ch
 
 # Fasta files were the scaffold sequences are included (Can be entire genome files, or just fasta files that contain the scaffold sequence)
 
-reference_fasta_file = "../Data/Genome_sequences/60444_draft.fasta"
+reference_fasta_file = "../Data/Genome_sequences/60444_manihot_esculenta_30Nov2017_CFBpv.fasta"
 
-target_fasta_file = "../Data/Genome_sequences/TME3_draft.fasta"
+target_fasta_file = "../Data/Genome_sequences/TME3_manihot_esculenta_07Oct2017_aWswf.fasta"
 
 
 # BLAT output files (.psl) that includes gene mappings onto the genomes which includes the specified scaffolds
 # The paths should be relative to where this script is... or absolute paths
-ref_psl_file = "../Data/Gene_BLAT_mappings/60444_BNG_plus_notscaff.psl"
+ref_psl_file = "../Data/Gene_BLAT_mappings/60444_dovetail_AM560.v6.1-cmd2-correct.psl"
 
-target_psl_file = "../Data/Gene_BLAT_mappings/TME3_BNG_plus_notscaff.psl"
+target_psl_file = "../Data/Gene_BLAT_mappings/TME3_dovetail_AM560.v6.1-cmd2-correct.psl"
 
 # Parameters for Plotting
 
@@ -46,15 +46,16 @@ N_region_min = 100 # threshold how big NNNN regions have to be in order to plot 
 
 ref_scaff_x_offset = 0 # moving the reference scaffold to the left or  for nicer plots
 
-target_scaff_x_offset = 300000 # moving the target scaffold to the left or right for nicer plots
+#target_scaff_x_offset = 300000 # moving the target scaffold to the left or right for nicer plots
+target_scaff_x_offset = 0 # moving the target scaffold to the left or right for nicer plots
 
 
 # TME3 cmd2 scaffold list
 #For example: 'Super-Scaffold_1951' or 'Super-Scaffold_730'
 
-ref_scaffold = '004409F'
+ref_scaffold = 'Scaffold_1478;HRSCAF=3800'
 
-target_scaffold = "Super-Scaffold_1022"
+target_scaffold = "Scaffold_7;HRSCAF=130"
 
 # Whether you want to invert the reference or target scaffold:
 

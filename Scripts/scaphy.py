@@ -30,34 +30,54 @@ rphilipp@ethz.student.ch
 #########                                      || Parameters ||                                           ###########
 #####################################################################################################################
 
-## Fasta files were the scaffold sequences are included (Can be entire genome files, or just fasta files that contain the scaffold sequence)
-# Needed to draw scaffolds with their gaps
+## Fasta files where the scaffold sequences are included (Can be entire genome files, or just fasta files that contain the scaffold sequence)
+# Needed in order to draw scaffolds with their gaps
+assembly_fasta_file = "../Data/Genome_sequences/example_assembly.fa"
 
-reference_fasta_file = "../Data/Genome_sequences/60444_draft.fasta"
 
 ## BLAT output files (.psl) that includes gene mappings onto the genome which includes the specified scaffolds
 # The paths should be relative to where this script is... or absolute paths
-ref_psl_file = "../Data/Gene_BLAT_mappings/60444_draft.fasta_BNG_cDNAs.psl"
+ref_psl_file = "../Data/Gene_BLAT_mappings/example.psl"
 
-# Reference genome information file (.gff3) from Phytozome (I deleted the first 3 header rows for simplicity)
-reference_gff_file = "../Data/Reference_genome_info/OriginalMesculenta_305_v6.1.gene.gff3"
+# Reference genome information file (.gff3) from Phytozome (To be parsed with the gffutils library)
+reference_gff_file = "../Data/Reference_genome_info/example.gff3"
 
 # Parameters for Plotting
 
-N_region_min = 100  # threshold how big NNNN regions have to be in order to plot them
+N_region_min = 100  # threshold how big NNNN regions have to be in order to plot them (otherwise the whole scaffold has red lines)
 
 
 # List of scaffolds to draw
 # For example: list_of_scaffolds = ['Super-Scaffold_1951' or 'Super-Scaffold_730']
 
-list_of_scaffolds = ['007694F','000110F','Super-Scaffold_29']
+#list_of_scaffolds = ['Super-Scaffold_749','Super-Scaffold_3500', 'Super-Scaffold_1158', 'Super-Scaffold_2173','tig00006251','tig00020376','tig00020843','tig00027137','tig00028574','tig00006859.1','tig00014484','tig00024811']
+#list_of_scaffolds = ['Super-Scaffold_54','007694F','000110F','Super-Scaffold_29','004265F','Super-Scaffold_30','003795F','004318F','004969F','005530F','10441','Super-Scaffold_289','002681F','000798F.2','Super-Scaffold_178','006196F','003630F','Super-Scaffold_277','000585F','Super-Scaffold_81','006411F','003427F','000494F','003871F','003081F','Super-Scaffold_541','000692F','000051F.1','001293F','Super-Scaffold_300','Super-Scaffold_534','Super-Scaffold_35','Super-Scaffold_111']
+list_of_scaffolds = ['scaffold16','scaffold1530']
+
 
 # Whether you want to invert the reference or target scaffold:
 # simply list all scaffold names that you want inverted like: ['scaffold1', 'scaffold2', 'scaffold3']
 
-scaffolds_to_invert = []
+#scaffolds_to_invert = ['Super-Scaffold_749', 'Super-Scaffold_2173', 'Super-Scaffold_3500']
+scaffolds_to_invert = ['scaffold16','scaffold1530']
 
+# Any Mappings where the matching number of basepairs from the transcripts are less than this, will be filtered out in the .psl file
+quality_of_mapping = 0.6
+
+## Size of Pseudo-Reference Chromosome on Plot:
+# pseudo_length = 31578400 # estimated chromosome 12 length from phytozome Cassava v6.1
+#reference_chromosome_length = 11000000  # only part of it so we can see everything better, but if genes lie beyond this region, then make this longer
+reference_chromosome_length = 515784000
+
+## What reference chromosome to focus on (this needs be exact same string as is used in the reference annotation file)
+#reference_chromosome = 'Chromosome12'
+reference_chromosome = 'chr4H'
+
+
+##############################################
 ## Manual Plotting Settings
+##############################################
+
 # For each scaffold, you need to specifiy a dictionary to declare the x_offset value, vertical_pointer value, the color of the lines
 ## colors:
 # b: blue
@@ -72,25 +92,15 @@ scaffolds_to_invert = []
 # If you want automatic plotting, simply comment this dictionary with the block comments: '''...'''
 # if you want manual plotting, un-comment this and specify the x_offset, vertical_pointer and line_color for each scaffold
 '''
-manual_plotting = {'Super-Scaffold_1022': {"x_offset":1000000,
-                                           "vertical_pointer": -100,
+manual_plotting = {'Super-Scaffold_16': {"x_offset":0,
+                                           "vertical_pointer": 200,
                                            "line_color": 'b'},
-                   'Super-Scaffold_44': {"x_offset":1000000,
-                                         "vertical_pointer": 100,
-                                         "line_color": 'r'},
-                   '000979F': {"x_offset":2000000,
-                               "vertical_pointer": -200,
-                               "line_color": 'b'}
+                   'Super-Scaffold_1530': {"x_offset": 0,
+                                         "vertical_pointer": -400,
+                                         "line_color": 'r'}
                    }
 '''
 
-## Size of Reference Chromosome on Plot:
-# pseudo_length = 31578400 # estimated chromosome 12 length from phytozome Cassava v6.1
-reference_chromosome_length = 11000000  # only part of it so we can see everything better, but if genes lie beyond this region, then make this longer
-
-
-## What reference chromosome to focus on (this needs be exact same string as is used in the reference annotation file)
-reference_chromosome = 'Chromosome12'
 
 
 #####################################################################################################################
@@ -191,7 +201,7 @@ class ScaffoldBNG:
         self.gaps = self.N_region_finder()  # this will be a dictionary with all the gaps! {1:[4,200], 2:[455, 7676]}
         self.record = seqIO_record
         self.genes = self.get_gene_coordinates(
-            psl_filename=psl_file)  # This gets the the gene or SNP mappings (coordinates) and ties them to this scaffold object
+            psl_filename=psl_file, quality_of_mapping=quality_of_mapping)  # This gets the the gene or SNP mappings (coordinates) and ties them to this scaffold object
         # self.genes => {'Manes.12G061900.1': [[1404095, 1405697]], 'Manes.12G059000.1': [[2613631, 2614138]]...}
         self.gene_mappings = None
         # {1: {'scaffold_coordinate': 229627, 'reference_chromosome': 'Chromosome12', 'reference_coordinate': 7495447.0, 'name': 'Manes.12G073900'}, 2:...}}
@@ -242,7 +252,7 @@ class ScaffoldBNG:
             gaps[i] = [N_region_start.pop(0), N_region_end.pop(0)]
         return gaps
 
-    def get_gene_coordinates(self, psl_filename, quality_of_mapping=0.95):
+    def get_gene_coordinates(self, psl_filename, quality_of_mapping=0.60):
         '''
         The .psl file should look like this:
         matches	misMatches	repMatches	nCount	qNumInsert	qBaseInsert	tNumInsert	tBaseInsert	strand	qName   qSize	qStart	qEnd	tName	tSize	tStart	tEnd	blockCount	blockSizes	qStarts	tStarts
@@ -266,7 +276,7 @@ class ScaffoldBNG:
                                             header=None)  # load in the gene mapping .psl file
         psl_gene_mappings = psl_gene_mappings[
             psl_gene_mappings[13] == self.id]  # Filter so we only keep rows of relevant cmd2 scaffolds
-        # Filtering out genes that don't have at least 90% matching bps of the mRNA
+        # Filtering out genes that don't have at least 60% matching bps of the mRNA (this value can be customized in the top)
         psl_gene_mappings = psl_gene_mappings[psl_gene_mappings[0] > quality_of_mapping * (psl_gene_mappings[10])]
 
         pattern = re.compile('.*(?=\.)')  # Pattern matching to gene underlying gene name instead of CDS names...
@@ -346,7 +356,7 @@ class ScaffoldBNG:
         # The gene location stats
         stats_text = str(self.reference_chromosome_hits) + "/" + str(
             self.reference_chromosome_hits + self.other_chromosome_hits) + " Genes Mapped Here"
-        plt.text(100000 + x_offset + self.length, text_location, stats_text, fontsize=5)
+        plt.text(3000000 + x_offset + self.length, text_location, stats_text, fontsize=5)
 
     def plot_all_genes(self, vertical_pointer=100, x_offset=0, unique_color='c', mutual_color='y', line_color='c'):
         print("\t"+"Plotting all genes for: "+ str(self.id))
@@ -575,7 +585,7 @@ for i in range(num_colors):
     colors.append(cm(1.0 * i / num_colors))
 
 scaff_dict = generate_scaffold_objects(list_of_scaffold_names=list_of_scaffolds,
-                                       path_to_input_fasta=reference_fasta_file,
+                                       path_to_input_fasta=assembly_fasta_file,
                                        psl_file=ref_psl_file)
 
 ## Get mappings to the reference genome annotations
@@ -597,7 +607,7 @@ try: # if there is a manual dictionary, then we will use it to make the plot
 except:
     Plotter.auto_plot()
 
-## This is just to create a standard sized output plot
+## This is just to create a standard sized output plot (minimum size)
 plt.plot([-1000, -1000], [800, -800], linestyle='-', linewidth=0.0, color='r')
 plt.plot([4500000, 4500000], [800, -800], linestyle='-', linewidth=0.0, color='r')
 
