@@ -22,7 +22,7 @@ Here is an example output:
 **scaco.py** (Scaffold Comparison) 
 --
 [How it Works]
-scaco directly compares two scaffolds based on gene annotations. It highlights and maps which genes are similar on the two scaffolds, and also highlights which genes are present on one but not the other. Additionally, it also plots the gaps within the scaffolds.
+scaco directly compares two scaffolds based on gene annotations. It highlights and maps which genes are similar on the two scaffolds, and also highlights which genes are present on one but not the other. Additionally, it also plots the gaps within the scaffolds. This is useful for comparing haplotype contigs of a de-novo assembly.
 
 Here is an example output:
 ![example scaco output](https://github.com/pbieberstein/SCEVT/blob/master/documentation/scaal_example_output.png)
