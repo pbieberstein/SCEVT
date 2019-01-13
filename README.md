@@ -90,3 +90,7 @@ python scaphy.py
 * scaal.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
 * scaphy.py script is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
 * Documentation is DONE ![#c5f015](https://placehold.it/15/c5f015/000000?text=+)
+
+*This tool was written to assist in a de-novo genome assembly project at ETH-Zurich*
+
+It is not activily maintained but it should still be useful. If you have any questions/ideas/concerns, contact me.
