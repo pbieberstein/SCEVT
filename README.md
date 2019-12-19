@@ -60,7 +60,7 @@ a new virtual environment with the dependencies for this project.
 
 ```bash
 cd path/to/Project/directory
-conda create --prefix ./scevt-env biopython matplotlib==1.5.3 pandas
+conda create --prefix ./scevt-env biopython matplotlib==1.5.3 pandas biopython
 # This creates a new environment with biopython and matplotlib installed inside the folder "scevt_env"
 ```
 
